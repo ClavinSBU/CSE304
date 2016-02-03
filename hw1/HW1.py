@@ -69,7 +69,7 @@ def parse_all(token_array, labels):
             labels[token_array[x].replace('__LABEL__', '')] = instrs
             #print(labels)
         else:
-            print('Error: invalid opcode ' + token_array[x]) # todo, return something bad here
+            print('Error: invalid opcode \'' + token_array[x] + '\', exiting') # todo, return something bad here
             sys.exit()
         #print(ret)
         x = x + 1
