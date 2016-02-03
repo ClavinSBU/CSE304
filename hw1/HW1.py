@@ -2,7 +2,6 @@
 import sys
 
 # TODO:
-# Verify labels are correctly formatted
 # Document functions
 # Remove debugging print statements
 
@@ -204,8 +203,9 @@ def is_program_valid(instruction_array, label_map):
                     print('Error: invalid digit \'' + instruction_array[i][1] + '\', exiting')
                     sys.exit()
             else:
+                is_label_correct(instruction_array[i][1])
                 if get_jump_addr(instruction_array[i][1], label_map) < 0:
-                    print('Error: label \'' + instruction_array[i][1] + '\' not valid, exiting')
+                    print('Error: label \'' + instruction_array[i][1] + '\' not found, exiting')
                     sys.exit()
             print(instruction_array[i])
         i = i + 1
@@ -230,6 +230,15 @@ def strip_comments(raw_data):
 
     #print('fin + ' + ret)
     return ret
+
+def is_label_correct(label):
+    if label[0].isalpha() == False:
+        print('Error: label \'' + label + '\' must begin with an alphabetic character, exiting')
+        sys.exit()
+    for i in label:
+        if i.isalnum() == False and i != '_':
+            print('Error: label \'' + label + '\' can only contain alphanumeric characters and \'_\', exiting')
+            sys.exit()
 
 label_map = {}
 data = sys.stdin.read()
