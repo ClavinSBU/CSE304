@@ -170,7 +170,7 @@ def run_instructions(instruction_array, jump_addrs):
             addr = s.pop()
             print(addr)
             if addr not in store.keys():
-                print('Error: store address not initialized, exiting')
+                print('Error: store address ' + str(addr) + ' not initialized, exiting')
                 sys.exit()
             print(addr not in store.keys())
             print(store[addr])
