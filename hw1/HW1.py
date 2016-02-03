@@ -84,7 +84,11 @@ def imath(s, operand):
 
 def get_jump_addr(label, jump_addrs):
     print('rec ' + label)
-    print('got: ' + str(jump_addrs[label]))
+    try:
+        print('got: ' + str(jump_addrs[label]))
+    except:
+        print('bad')
+        return -1
     return jump_addrs[label]
 
 def run_instructions(instruction_array, jump_addrs):
@@ -165,6 +169,9 @@ def is_program_valid(instruction_array, label_map):
                     int(instruction_array[i][1])
                 except:
                     return False
+            else:
+                if get_jump_addr(instruction_array[i][1], label_map) < 0:
+                    return False
             print(instruction_array[i])
         i = i + 1
     return True
@@ -173,11 +180,11 @@ label_map = {}
 data = sys.stdin.read()
 #parse_line(sys.stdin.read())
 data = data.replace(':', '__LABEL__ ')
-print(data.split())
+#print(data.split())
 instruction_array = parse_all(data.split(), label_map)
-print(instruction_array)
+#print(instruction_array)
 #print(label_map)
-#run_instructions(instruction_array, label_map)
 if is_program_valid(instruction_array, label_map) == False:
     print('exiting')
     sys.exit()
+#run_instructions(instruction_array, label_map)
