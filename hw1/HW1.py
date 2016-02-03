@@ -72,16 +72,16 @@ def imath(s, operand):
         s.push(first + second)
 
     elif operand == '-':
-        s.push(first - second)
+        s.push(second - first)
 
     elif operand == '*':
         s.push(first * second)
 
     elif operand == '/':
-        s.push(first / second)
+        s.push(second / first)
 
     elif operand == '%':
-        s.push(first % second)
+        s.push(second % first)
 
 def get_jump_addr(label, jump_addrs):
     print('rec ' + label)
@@ -191,4 +191,4 @@ if instruction_array == []:
 if is_program_valid(instruction_array, label_map) == False:
     print('exiting')
     sys.exit()
-#run_instructions(instruction_array, label_map)
+run_instructions(instruction_array, label_map)
