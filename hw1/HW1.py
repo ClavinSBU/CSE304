@@ -169,6 +169,10 @@ def run_instructions(instruction_array, jump_addrs):
             print('load found')
             addr = s.pop()
             print(addr)
+            if addr not in store.keys():
+                print('Error: store address not initialized, exiting')
+                sys.exit()
+            print(addr not in store.keys())
             print(store[addr])
             val = store[addr]
             s.push(val)
