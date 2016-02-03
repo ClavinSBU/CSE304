@@ -185,6 +185,7 @@ def run_instructions(instruction_array, jump_addrs):
 
         else:
             print('Instruction not found ' + op)
+            sys.exit()
 
         s.print_stack()
         pc = pc + 1
