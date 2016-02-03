@@ -155,6 +155,20 @@ def run_instructions(instruction_array, jump_addrs):
 
     print('final val: ' + str(s.peek()))
 
+def is_program_valid(instruction_array, label_map):
+    i = 0
+    while i < len(instruction_array):
+        #print(instruction_array[i])
+        if has_arg(instruction_array[i][0]):
+            if instruction_array[i][0] == 'ildc':
+                try:
+                    int(instruction_array[i][1])
+                except:
+                    return False
+            print(instruction_array[i])
+        i = i + 1
+    return True
+
 label_map = {}
 data = sys.stdin.read()
 #parse_line(sys.stdin.read())
@@ -163,4 +177,7 @@ print(data.split())
 instruction_array = parse_all(data.split(), label_map)
 print(instruction_array)
 #print(label_map)
-run_instructions(instruction_array, label_map)
+#run_instructions(instruction_array, label_map)
+if is_program_valid(instruction_array, label_map) == False:
+    print('exiting')
+    sys.exit()
