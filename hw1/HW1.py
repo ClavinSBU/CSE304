@@ -2,7 +2,7 @@
 import sys
 
 # TODO:
-# Load / Store functionality
+# Verify add / store validity
 # Verify labels are correctly formatted
 # Document functions
 # Remove debugging print statements
@@ -104,6 +104,7 @@ def get_jump_addr(label, jump_addrs):
 def run_instructions(instruction_array, jump_addrs):
     pc = 0
     s = StackClass()
+    store = {}
     while pc < len(instruction_array):
         print(len(instruction_array[pc]))
         op = instruction_array[pc][0]
@@ -159,12 +160,28 @@ def run_instructions(instruction_array, jump_addrs):
             pc = get_jump_addr(instruction_array[pc][1], jump_addrs)
             continue
 
+        elif op == 'load':
+            print('load found')
+            addr = s.pop()
+            print(addr)
+            print(store[addr])
+            val = store[addr]
+            s.push(val)
+
+        elif op == 'store':
+            print('store found')
+            val = s.pop()
+            addr = s.pop()
+            store[addr] = val
+            print(store)
+
         elif op == 'TEST':
             s.print_stack()
 
         else:
             print('Instruction not found ' + op)
 
+        s.print_stack()
         pc = pc + 1
 
     print('final val: ' + str(s.peek()))
