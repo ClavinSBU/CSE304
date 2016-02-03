@@ -204,10 +204,12 @@ def is_program_valid(instruction_array, label_map):
                 try:
                     int(instruction_array[i][1])
                 except:
-                    return False
+                    print('Error: invalid digit \'' + instruction_array[i][1] + '\', exiting')
+                    sys.exit()
             else:
                 if get_jump_addr(instruction_array[i][1], label_map) < 0:
-                    return False
+                    print('Error: label \'' + instruction_array[i][1] + '\' not valid, exiting')
+                    sys.exit()
             print(instruction_array[i])
         i = i + 1
     return True
@@ -220,7 +222,5 @@ data = data.replace(':', '__LABEL__ ')
 instruction_array = parse_all(data.split(), label_map)
 #print(instruction_array)
 #print(label_map)
-if is_program_valid(instruction_array, label_map) == False:
-    print('exiting')
-    sys.exit()
+is_program_valid(instruction_array, label_map)
 run_instructions(instruction_array, label_map)
