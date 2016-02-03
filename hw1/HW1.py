@@ -69,8 +69,8 @@ def parse_all(token_array, labels):
             labels[token_array[x].replace('__LABEL__', '')] = instrs
             #print(labels)
         else:
-            print('invalid opcode ' + token_array[x]) # todo, return something bad here
-            return []
+            print('Error: invalid opcode ' + token_array[x]) # todo, return something bad here
+            sys.exit()
         #print(ret)
         x = x + 1
     return ret
@@ -219,9 +219,6 @@ data = data.replace(':', '__LABEL__ ')
 #print(data.split())
 instruction_array = parse_all(data.split(), label_map)
 #print(instruction_array)
-if instruction_array == []:
-    print('Malformed instruction')
-    sys.exit()
 #print(label_map)
 if is_program_valid(instruction_array, label_map) == False:
     print('exiting')
