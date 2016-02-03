@@ -6,7 +6,6 @@ import sys
 # Verify labels are correctly formatted
 # Document functions
 # Remove debugging print statements
-# Ensure stack is populated enough to perform desired operation
 # Properly explain where program went wrong with better descriptions
 # Add support for commented input programs (probably by deleting the entire thing)
 
@@ -23,6 +22,9 @@ class StackClass:
 
     def pop(self):
         print('Was ' + str(self.items))
+        if len(self.items) == 0:
+            print('Error: stack is empty, exiting')
+            sys.exit()
         ret=self.items[len(self.items) - 1]
         print('Popping ' + str(ret))
         self.items.pop()
@@ -30,6 +32,9 @@ class StackClass:
         return ret
 
     def peek(self):
+        if len(self.items) == 0:
+            print('Error: stack is empty, exiting')
+            sys.exit()
         return self.items[len(self.items) - 1]
 
 def has_arg(opcode):
