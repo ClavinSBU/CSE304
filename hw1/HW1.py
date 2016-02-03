@@ -2,12 +2,10 @@
 import sys
 
 # TODO:
-# Verify add / store validity
+# Add support for commented input programs (probably by deleting the entire thing)
 # Verify labels are correctly formatted
 # Document functions
 # Remove debugging print statements
-# Properly explain where program went wrong with better descriptions
-# Add support for commented input programs (probably by deleting the entire thing)
 
 class StackClass:
     def __init__(self):
