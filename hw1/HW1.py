@@ -1,6 +1,15 @@
 
 import sys
 
+# TODO:
+# Load / Store functionality
+# Verify labels are correctly formatted
+# Document functions
+# Remove debugging print statements
+# Ensure stack is populated enough to perform desired operation
+# Properly explain where program went wrong with better descriptions
+# Add support for commented input programs (probably by deleting the entire thing)
+
 class StackClass:
     def __init__(self):
         self.items = []
