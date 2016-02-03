@@ -2,7 +2,6 @@
 import sys
 
 # TODO:
-# Add support for commented input programs (probably by deleting the entire thing)
 # Verify labels are correctly formatted
 # Document functions
 # Remove debugging print statements
@@ -212,8 +211,31 @@ def is_program_valid(instruction_array, label_map):
         i = i + 1
     return True
 
+def strip_comments(raw_data):
+    in_comment = False
+    ret = ''
+    #print('fin + ' + raw_data)
+    for char in raw_data:
+        #print(char)
+        if char == '#':
+            print('comment found')
+            in_comment = True
+
+        if char == '\n':
+            print('newline found')
+            in_comment = False
+
+        if in_comment == False:
+            ret += char
+
+    #print('fin + ' + ret)
+    return ret
+
 label_map = {}
 data = sys.stdin.read()
+#print(data)
+data=strip_comments(data)
+#print(data)
 #parse_line(sys.stdin.read())
 data = data.replace(':', '__LABEL__ ')
 #print(data.split())
