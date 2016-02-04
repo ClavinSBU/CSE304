@@ -208,7 +208,7 @@ def run_instructions(instruction_array, jump_addrs):
                     # after pc is set with a jump instruction, it in continued
                     # so we never make it here if instruction is jump
 
-    print('Final value is: ' + str(s.peek()))
+    print("Final value is: {0}".format(s.peek()))
 
 # verifies program is correct before continuing onto the interpreter
 def is_program_valid(instruction_array, label_map):
