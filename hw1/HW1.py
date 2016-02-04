@@ -2,6 +2,11 @@
 import sys, re
 
 # TODO:
+# Check that labels are valid even when not jumped to
+#   E.g. the following should be invalid
+#       2here:    ildc 10
+#                 ildc 20
+#   Currently, it passes
 
 class StackClass:
     def __init__(self):
@@ -17,8 +22,7 @@ class StackClass:
     def pop(self):
         print_debug('Was ' + str(self.items))
         if len(self.items) == 0:
-            print('Error: stack is empty, exiting')
-            sys.exit()
+            print_error("Stack is empty, exiting")
         ret=self.items[len(self.items) - 1]
         print_debug('Popping ' + str(ret))
         self.items.pop()
@@ -27,8 +31,7 @@ class StackClass:
 
     def peek(self):
         if len(self.items) == 0:
-            print('Error: stack is empty, exiting')
-            sys.exit()
+            print_error("Stack is empty, exiting")
         return self.items[len(self.items) - 1]
 
 # boolean function to see if it's one of the 4 opcodes that come with an argument after it
@@ -76,8 +79,7 @@ def parse_all(token_array, labels):
 
         # if we've made it this far, the instruction instruction is not valid, so quit
         else:
-            print('Error: invalid opcode \'' + token_array[x] + '\', exiting') # todo, return something bad here
-            sys.exit()
+            print_error("Invalid opcode '{0}', exiting.".format(token_array[x])) # todo, return something bad here
         #print_debug(ret)
         x = x + 1
     return ret
@@ -178,8 +180,7 @@ def run_instructions(instruction_array, jump_addrs):
             addr = s.pop()
             print_debug(addr)
             if addr not in store.keys():
-                print('Error: store address ' + str(addr) + ' not initialized, exiting')
-                sys.exit()
+                print_error("Store address '{0}' not initialized, exiting.".format(addr))
             print_debug(addr not in store.keys())
             print_debug(store[addr])
             val = store[addr]
@@ -196,8 +197,7 @@ def run_instructions(instruction_array, jump_addrs):
             print_debug(s.get_stack())
 
         else:
-            print_debug('Instruction not found ' + op)
-            sys.exit()
+            print_error("Instruction not found '{0}'".format(op))
 
         print_debug(s.get_stack())
         pc = pc + 1 # advance to next instruction after current one is completed.
@@ -216,13 +216,11 @@ def is_program_valid(instruction_array, label_map):
                 try:
                     int(instruction_array[i][1]) # see whether ildc's argument is a valid int
                 except:
-                    print('Error: invalid digit \'' + instruction_array[i][1] + '\', exiting')
-                    sys.exit()
+                    print_error("Invalid immediate number '{0}', exiting".format(instruction_array[i][1]))
             else:
                 is_label_correct(instruction_array[i][1]) # check to see whether label is formatted correctly
                 if get_jump_addr(instruction_array[i][1], label_map) < 0: # check to see if the label is mapped to an index
-                    print('Error: label \'' + instruction_array[i][1] + '\' not found, exiting')
-                    sys.exit()
+                    print_error("Label '{0}' not found, exiting".format(instruction_array[i][1]))
             print_debug(instruction_array[i])
         i = i + 1
     return True
@@ -232,16 +230,18 @@ def strip_comments(raw_data):
 
 def is_label_correct(label):
     if label[0].isalpha() == False: # ensure first character is alpha
-        print('Error: label \'' + label + '\' must begin with an alphabetic character, exiting')
-        sys.exit()
+        print_error("Label '{0}' must begin with an alphabetic character, exiting.".format(label))
     for i in label:
         if i.isalnum() == False and i != '_': # ensure character alphanum, or an underscore, De Morgan's law FTW
-            print('Error: label \'' + label + '\' can only contain alphanumeric characters and \'_\', exiting')
-            sys.exit()
+            print_error("Label '{0}' can only contain alphanumeric characters and '_', exiting.".format(label))
 
 def print_debug(input_string):
     if 0: # set to 1 to print debug statements, 0 to not print anything
         print(input_string)
+
+def print_error(error_string):
+    print('Error: {0}'.format(error_string))
+    sys.exit(1)
 
 label_map = {} # hashmap to map labels to their respective program counter values
 data = sys.stdin.read() # data is a string of the inputted program
