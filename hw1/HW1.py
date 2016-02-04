@@ -2,29 +2,27 @@
 import sys
 
 # TODO:
-# Document functions
-# Remove debugging print statements
 
 class StackClass:
     def __init__(self):
         self.items = []
 
-    def print_stack(self):
-        print(self.items)
+    def get_stack(self):
+        return self.items
 
     def push(self, value):
-        print('Pushing ' + str(value))
+        print_debug('Pushing ' + str(value))
         self.items.append(int(value))
 
     def pop(self):
-        print('Was ' + str(self.items))
+        print_debug('Was ' + str(self.items))
         if len(self.items) == 0:
             print('Error: stack is empty, exiting')
             sys.exit()
         ret=self.items[len(self.items) - 1]
-        print('Popping ' + str(ret))
+        print_debug('Popping ' + str(ret))
         self.items.pop()
-        print('Now ' + str(self.items))
+        print_debug('Now ' + str(self.items))
         return ret
 
     def peek(self):
@@ -54,9 +52,9 @@ def parse_all(token_array, labels):
                # if the first line of the program is a label, then it means set
                # program counter to instruction 0 when jumped to
     ret = []
-    #print(len(token_array))
+    #print_debug(len(token_array))
     while x < len(token_array):
-        #print('token: ' + token_array[x])
+        #print_debug('token: ' + token_array[x])
 
         # if opcode is one of the four opcodes that take arguments, append the list (opcode and arg) to the array
         if has_arg(token_array[x]):
@@ -71,16 +69,16 @@ def parse_all(token_array, labels):
 
         # if it's a jump instruction, insert the label into the hashmap where <label name> points to current instr count
         elif '__LABEL__' in token_array[x]:
-            #print('label found')
+            #print_debug('label found')
             # strip __LABEL__ and insert label name into hashmap
             labels[token_array[x].replace('__LABEL__', '')] = instrs
-            #print(labels)
+            #print_debug(labels)
 
         # if we've made it this far, the instruction instruction is not valid, so quit
         else:
             print('Error: invalid opcode \'' + token_array[x] + '\', exiting') # todo, return something bad here
             sys.exit()
-        #print(ret)
+        #print_debug(ret)
         x = x + 1
     return ret
 
@@ -110,11 +108,11 @@ def imath(s, operand):
 # which is determined by what value the label is mapped to in the hashmap
 # it returns -1 if it is not found, indicating the label is not part of program.
 def get_jump_addr(label, jump_addrs):
-    print('rec ' + label)
+    print_debug('rec ' + label)
     try:
-        print('got: ' + str(jump_addrs[label]))
+        print_debug('got: ' + str(jump_addrs[label]))
     except:
-        print('bad')
+        print_debug('bad')
         return -1
     return jump_addrs[label]
 
@@ -124,7 +122,7 @@ def run_instructions(instruction_array, jump_addrs):
     s = StackClass() # make our stack
     store = {} # make our store
     while pc < len(instruction_array):
-        print(len(instruction_array[pc]))
+        print_debug(len(instruction_array[pc]))
         op = instruction_array[pc][0]
 
         if op == 'ildc':
@@ -160,62 +158,62 @@ def run_instructions(instruction_array, jump_addrs):
             s.push(second)
 
         elif op == 'jz':
-            print('jz found')
+            print_debug('jz found')
             top=s.pop()
             if top == 0:
                 pc = get_jump_addr(instruction_array[pc][1], jump_addrs) # set pc to what the label is mapped to
                 continue
 
         elif op == 'jnz':
-            print('jnz found')
+            print_debug('jnz found')
             top=s.pop()
             if top != 0:
                 pc = get_jump_addr(instruction_array[pc][1], jump_addrs) # set pc to what the label is mapped to
                 continue
 
         elif op == 'jmp':
-            print('jmp found')
+            print_debug('jmp found')
             pc = get_jump_addr(instruction_array[pc][1], jump_addrs) # set pc to what the label is mapped to
             continue
 
         elif op == 'load':
-            print('load found')
+            print_debug('load found')
             addr = s.pop()
-            print(addr)
+            print_debug(addr)
             if addr not in store.keys():
                 print('Error: store address ' + str(addr) + ' not initialized, exiting')
                 sys.exit()
-            print(addr not in store.keys())
-            print(store[addr])
+            print_debug(addr not in store.keys())
+            print_debug(store[addr])
             val = store[addr]
             s.push(val)
 
         elif op == 'store':
-            print('store found')
+            print_debug('store found')
             val = s.pop()
             addr = s.pop()
             store[addr] = val
-            print(store)
+            print_debug(store)
 
         elif op == 'TEST':
-            s.print_stack()
+            print_debug(s.get_stack())
 
         else:
-            print('Instruction not found ' + op)
+            print_debug('Instruction not found ' + op)
             sys.exit()
 
-        s.print_stack()
+        print_debug(s.get_stack())
         pc = pc + 1 # advance to next instruction after current one is completed.
                     # after pc is set with a jump instruction, it in continued
                     # so we never make it here if instruction is jump
 
-    print('final val: ' + str(s.peek()))
+    print('Final value is: ' + str(s.peek()))
 
 # verifies program is correct before continuing onto the interpreter
 def is_program_valid(instruction_array, label_map):
     i = 0
     while i < len(instruction_array):
-        #print(instruction_array[i])
+        #print_debug(instruction_array[i])
         if has_arg(instruction_array[i][0]):
             if instruction_array[i][0] == 'ildc':
                 try:
@@ -228,29 +226,29 @@ def is_program_valid(instruction_array, label_map):
                 if get_jump_addr(instruction_array[i][1], label_map) < 0: # check to see if the label is mapped to an index
                     print('Error: label \'' + instruction_array[i][1] + '\' not found, exiting')
                     sys.exit()
-            print(instruction_array[i])
+            print_debug(instruction_array[i])
         i = i + 1
     return True
 
 def strip_comments(raw_data):
     in_comment = False
     ret = ''
-    #print('fin + ' + raw_data)
+    #print_debug('fin + ' + raw_data)
     for char in raw_data:
-        #print(char)
+        #print_debug(char)
         if char == '#': # if we encounter a comment, set in_comment to true
-            print('comment found')
+            print_debug('comment found')
             in_comment = True
 
         if char == '\n': # if we encounter a newline, set in_comment to false
-            print('newline found')
+            print_debug('newline found')
             in_comment = False
 
         if in_comment == False: # if we are not in a comment, append the character to ret
                                 # this means that comments are NOT appended to ret, so they are stripped
             ret += char
 
-    #print('fin + ' + ret)
+    #print_debug('fin + ' + ret)
     return ret
 
 def is_label_correct(label):
@@ -262,16 +260,20 @@ def is_label_correct(label):
             print('Error: label \'' + label + '\' can only contain alphanumeric characters and \'_\', exiting')
             sys.exit()
 
+def print_debug(input_string):
+    if 0: # set to 1 to print debug statements, 0 to not print anything
+        print(input_string)
+
 label_map = {}
 data = sys.stdin.read()
-#print(data)
+#print_debug(data)
 data=strip_comments(data)
-#print(data)
+#print_debug(data)
 #parse_line(sys.stdin.read())
 data = data.replace(':', '__LABEL__ ')
-#print(data.split())
+#print_debug(data.split())
 instruction_array = parse_all(data.split(), label_map)
-#print(instruction_array)
-#print(label_map)
+#print_debug(instruction_array)
+#print_debug(label_map)
 is_program_valid(instruction_array, label_map)
 run_instructions(instruction_array, label_map)
