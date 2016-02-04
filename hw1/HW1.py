@@ -264,16 +264,16 @@ def print_debug(input_string):
     if 0: # set to 1 to print debug statements, 0 to not print anything
         print(input_string)
 
-label_map = {}
-data = sys.stdin.read()
+label_map = {} # hashmap to map labels to their respective program counter values
+data = sys.stdin.read() # data is a string of the inputted program
 #print_debug(data)
-data=strip_comments(data)
+data=strip_comments(data) # remove comments from inputted source
 #print_debug(data)
 #parse_line(sys.stdin.read())
-data = data.replace(':', '__LABEL__ ')
+data = data.replace(':', '__LABEL__ ') # replace labels with a reserved keyword for labels
 #print_debug(data.split())
-instruction_array = parse_all(data.split(), label_map)
+instruction_array = parse_all(data.split(), label_map) # create formatted list of instructions to be run on interpreter
 #print_debug(instruction_array)
 #print_debug(label_map)
-is_program_valid(instruction_array, label_map)
-run_instructions(instruction_array, label_map)
+is_program_valid(instruction_array, label_map) # verify program is going to run on interpreter
+run_instructions(instruction_array, label_map) # run it
