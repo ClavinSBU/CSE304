@@ -109,10 +109,7 @@ def imath(s, operand):
 # it returns -1 if it is not found, indicating the label is not part of program.
 def get_jump_addr(label, jump_addrs):
     print_debug('rec ' + label)
-    try:
-        print_debug('got: ' + str(jump_addrs[label]))
-    except:
-        print_debug('bad')
+    if label not in jump_addrs.keys():
         return -1
     return jump_addrs[label]
 
