@@ -209,32 +209,29 @@ def run_instructions(instruction_array, jump_addrs):
     print("Final value is: {0}".format(s.peek()))
 
 # verifies program is correct before continuing onto the interpreter
-def is_program_valid(instruction_array, label_map):
-    i = 0
-    while i < len(instruction_array):
-        #print_debug(instruction_array[i])
-        if has_arg(instruction_array[i][0]):
-            if instruction_array[i][0] == 'ildc':
+def check_program_valid(instructions, label_map):
+    for instruction in instructions:
+        #print_debug(instruction)
+        if has_arg(instruction[0]):
+            if instruction[0] == 'ildc':
                 try:
-                    int(instruction_array[i][1]) # see whether ildc's argument is a valid int
+                    int(instruction[1]) # see whether ildc's argument is a valid int
                 except:
-                    print_error("Invalid immediate number '{0}', exiting".format(instruction_array[i][1]))
+                    print_error("Invalid immediate number '{0}', exiting".format(instruction[1]))
             else:
-                is_label_correct(instruction_array[i][1]) # check to see whether label is formatted correctly
-                if get_jump_addr(instruction_array[i][1], label_map) is None: # check to see if the label is mapped to an index
-                    print_error("Label '{0}' not found, exiting".format(instruction_array[i][1]))
-            print_debug(instruction_array[i])
-        i = i + 1
-    return True
+                is_label_correct(instruction[1]) # check to see whether label is formatted correctly
+                if get_jump_addr(instruction[1], label_map) is None: # check to see if the label is mapped to an index
+                    print_error("Label '{0}' not found, exiting".format(instruction[1]))
+            print_debug(instruction)
 
 def strip_comments(raw_data):
     return re.sub(r"#.*\n", '\n', raw_data)
 
 def is_label_correct(label):
-    if label[0].isalpha() == False: # ensure first character is alpha
+    if not label[0].isalpha(): # ensure first character is alpha
         print_error("Label '{0}' must begin with an alphabetic character, exiting.".format(label))
-    for i in label:
-        if i.isalnum() == False and i != '_': # ensure character alphanum, or an underscore, De Morgan's law FTW
+    for char in label:
+        if not char.isalnum() and char != '_': # ensure character alphanum, or an underscore, De Morgan's law FTW
             print_error("Label '{0}' can only contain alphanumeric characters and '_', exiting.".format(label))
 
 def print_debug(input_string):
@@ -264,5 +261,5 @@ instruction_array = parse_all(data.split(), label_map) # create formatted list o
 #print_debug(instruction_array)
 #print_debug(label_map)
 
-is_program_valid(instruction_array, label_map) # verify program is going to run on interpreter
+check_program_valid(instruction_array, label_map) # verify program is going to run on interpreter
 run_instructions(instruction_array, label_map) # run it
