@@ -1,5 +1,5 @@
 
-import sys
+import sys, re
 
 # TODO:
 
@@ -228,25 +228,7 @@ def is_program_valid(instruction_array, label_map):
     return True
 
 def strip_comments(raw_data):
-    in_comment = False
-    ret = ''
-    #print_debug('fin + ' + raw_data)
-    for char in raw_data:
-        #print_debug(char)
-        if char == '#': # if we encounter a comment, set in_comment to true
-            print_debug('comment found')
-            in_comment = True
-
-        if char == '\n': # if we encounter a newline, set in_comment to false
-            print_debug('newline found')
-            in_comment = False
-
-        if in_comment == False: # if we are not in a comment, append the character to ret
-                                # this means that comments are NOT appended to ret, so they are stripped
-            ret += char
-
-    #print_debug('fin + ' + ret)
-    return ret
+    return re.sub(r"#.*\n", '\n', raw_data)
 
 def is_label_correct(label):
     if label[0].isalpha() == False: # ensure first character is alpha
