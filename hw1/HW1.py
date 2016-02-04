@@ -112,12 +112,10 @@ def imath(s, operand):
 
 # this function returns the value the program counter should be set to,
 # which is determined by what value the label is mapped to in the hashmap
-# it returns -1 if it is not found, indicating the label is not part of program.
+# it returns None if it is not found, indicating the label is not part of program.
 def get_jump_addr(label, jump_addrs):
     print_debug('rec ' + label)
-    if label not in jump_addrs.keys():
-        return -1
-    return jump_addrs[label]
+    return jump_addrs.get(label)
 
 # this is the actual interpreter
 def run_instructions(instruction_array, jump_addrs):
@@ -223,7 +221,7 @@ def is_program_valid(instruction_array, label_map):
                     print_error("Invalid immediate number '{0}', exiting".format(instruction_array[i][1]))
             else:
                 is_label_correct(instruction_array[i][1]) # check to see whether label is formatted correctly
-                if get_jump_addr(instruction_array[i][1], label_map) < 0: # check to see if the label is mapped to an index
+                if get_jump_addr(instruction_array[i][1], label_map) is None: # check to see if the label is mapped to an index
                     print_error("Label '{0}' not found, exiting".format(instruction_array[i][1]))
             print_debug(instruction_array[i])
         i = i + 1
