@@ -8,31 +8,35 @@ import sys, re
 #                 ildc 20
 #   Currently, it passes
 
-class StackClass:
+class Stack:
     def __init__(self):
-        self.items = []
+        # It's a python convention that underscored vars are private members
+        self._items = []
 
     def get_stack(self):
-        return self.items
+        return self._items
 
     def push(self, value):
-        print_debug('Pushing ' + str(value))
-        self.items.append(int(value))
+        # The following cast is necessary because value can either be 
+        # 1) an int from an arithmetic operation, etc.
+        # 2) a string from an ildc
+        print_debug("Pushing {0}".format(value))
+        self._items.append(int(value))
 
     def pop(self):
-        print_debug('Was ' + str(self.items))
-        if len(self.items) == 0:
+        print_debug("Was {0}".format(self._items))
+        if len(self._items) == 0:
             print_error("Stack is empty, exiting")
-        ret=self.items[len(self.items) - 1]
-        print_debug('Popping ' + str(ret))
-        self.items.pop()
-        print_debug('Now ' + str(self.items))
+
+        ret = self._items.pop()
+        print_debug("Popping {0}".format(ret))
+        print_debug("Now {0}".format(self._items))
         return ret
 
     def peek(self):
-        if len(self.items) == 0:
+        if len(self._items) == 0:
             print_error("Stack is empty, exiting")
-        return self.items[len(self.items) - 1]
+        return self._items[-1]
 
 # boolean function to see if it's one of the 4 opcodes that come with an argument after it
 def has_arg(opcode):
@@ -118,7 +122,7 @@ def get_jump_addr(label, jump_addrs):
 # this is the actual interpreter
 def run_instructions(instruction_array, jump_addrs):
     pc = 0 # pc is 0, run the 0th index instruction_array
-    s = StackClass() # make our stack
+    s = Stack() # make our stack
     store = {} # make our store
     while pc < len(instruction_array):
         print_debug(len(instruction_array[pc]))
