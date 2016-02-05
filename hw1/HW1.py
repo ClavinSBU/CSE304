@@ -192,8 +192,8 @@ class Program(object):
             elif op == 'store':
                 value = self._stack.pop()
                 address = self._stack.pop()
-                store[address] = value
-                print_debug(store)
+                self._store[address] = value
+                print_debug(self._store)
 
             elif op == 'TEST':
                 print_debug(self._stack)
