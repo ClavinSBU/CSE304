@@ -1,0 +1,14 @@
+      ildc 20
+      ildc 5
+over: yonder:
+here: ildc 1
+      isub
+      dup
+      jz   thataways
+      swap
+      ildc 10
+      iadd
+      swap
+      jmp  yonder		thataways:
+there:
+      pop

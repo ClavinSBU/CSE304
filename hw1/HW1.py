@@ -7,8 +7,6 @@ import sys, re
 # Relevant line in the HW:
 #     An integer num is a sequence of numeric characters, optionally preceded by a minus ("-")
 #
-# Test if double (or triple, etc.) labels are supported
-#
 # Remove 'Final value is:' before hand-in
 #
 # Remove TEST opcode before hand-in
