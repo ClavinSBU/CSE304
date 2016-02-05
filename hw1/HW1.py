@@ -257,23 +257,29 @@ class Program(object):
             print_error("Unknown math operation '{0}'".format(operand))
 
     def __str__(self):
-        """Prints the list of instructions and the label mapping.
+        """Returns the list of instructions and the label mapping.
 
         The instructions are printed with prepended 1-indexed line numbers.
 
         The labels are printed separately in the format LABEL: LINE_NUM where
         LABEL is the label name and LINE_NUM is the 1-indexed line it refers to.
         """
+        # Probably some performance issues with this code because of Python's
+        # immutable strings. This code is only ever called in development or
+        # testing, so it should be fine.
         i = 1
+        result_string = ""
         for line in self._instructions:
-            print_debug("{0}: {1} {2}".format(i, line.opcode, line.arg))
+            result_string += "{0}: {1}\n".format(i, line)
             i += 1
 
-        print('Labels:')
-        for label in self._labels.viewkeys():
-            print_debug("\t{0}: {1}".format(label, self._labels[label]+1))
+        result_string += 'Labels:'
+        for label, line_number in self._labels.iteritems():
+            result_string += "\n\t{0}: {1}".format(label, line_number+1)
             # Added 1 because the line numbers are stored 0-indexed,
             # but we are printing 1-indexed line numbers.
+
+        return result_string
 
 class Instruction(object):
     """Structured representation of a well-formatted Instruction"""
