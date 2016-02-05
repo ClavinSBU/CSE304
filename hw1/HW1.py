@@ -2,12 +2,6 @@ from __future__ import print_function # gives us Python 3's print backported
 import sys, re
 
 # TODO:
-# Check that labels are valid even when not jumped to
-#   E.g. the following should be invalid
-#       2here:    ildc 10
-#                 ildc 20
-#   Currently, it passes
-#
 # Should we allow integers with a leading zero?
 # What about leading pluses ('+')?
 # Relevant line in the HW:
@@ -383,6 +377,7 @@ class Parser(object):
             elif ':' in token_array[token_i]:
                 # strip __LABEL__ and insert label name into hashmap
                 label = token_array[token_i].replace(':', '')
+                self._is_label_valid(label)
                 self._program.addLabel(label, instruction_counter)
 
             # If we've made it this far, the instruction instruction is not valid, so exit
