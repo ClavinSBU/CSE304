@@ -12,4 +12,4 @@ here: ildc 1 #comments
 #
       jmp  here
 there:#
-      pop
+      pop # please go away
