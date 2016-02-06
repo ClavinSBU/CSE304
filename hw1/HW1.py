@@ -10,8 +10,6 @@ import sys, re
 # Remove 'Final value is:' before hand-in
 #
 # Remove TEST opcode before hand-in
-#
-# Possibly replace Parser._is_valid_label with a regex implementation??
 
 class Stack(object):
     """Basic implementation of a stack data structure.
@@ -381,7 +379,10 @@ class Parser(object):
             elif ':' in token_array[token_i]:
                 # strip __LABEL__ and insert label name into hashmap
                 label = token_array[token_i].replace(':', '')
-                self._is_label_valid(label)
+                if not self._is_label_valid(label):
+                    print_error(("'{0}' is not a valid label. Must begin "
+                                 "with an alphabetic character and have "
+                                 "only alphanumeric or '_' characters.").format(label))
                 self._program.addLabel(label, instruction_counter)
 
             # If we've made it this far, the instruction instruction is not valid, so exit
@@ -412,7 +413,10 @@ class Parser(object):
                     except:
                         print_error("Invalid immediate number '{0}', exiting".format(instruction.arg))
                 else:
-                    self._is_label_valid(instruction.arg) # check to see whether label is formatted correctly
+                    if not self._is_label_valid(instruction.arg):
+                        print_error(("'{0}' is not a valid label. Must begin "
+                                     "with an alphabetic character and have "
+                                     "only alphanumeric or '_' characters.").format(instruction.arg))
                     if self._program.labels.get(instruction.arg) is None: # check to see if the label is mapped to an index
                         print_error("Label '{0}' not found, exiting".format(instruction.arg))
                 print_debug(instruction)
@@ -449,7 +453,7 @@ class Parser(object):
 
         A valid label must begin with an alphabetic character then be followed
         by 0 or more alphanumeric or '_' characters. A regular expression for
-        valid labels is such: [a-zA-Z][a-zA-Z0-9_]*
+        valid labels is: [a-zA-Z][a-zA-Z0-9_]*
 
         Note, even if the label is valid, that does not guarantee it is defined.
 
@@ -457,14 +461,9 @@ class Parser(object):
             True if the label is valid as described above. False otherwise.
         """
         if label is None:
-            print_error("Jump-style instructions must have an argument.")
+            return False
 
-        if not label[0].isalpha(): # Ensure first character is alpha
-            print_error("Label '{0}' must begin with an alphabetic character, exiting.".format(label))
-
-        for char in label:
-            if not char.isalnum() and char != '_': # Ensure character alphanum, or an underscore, De Morgan's law FTW
-                print_error("Label '{0}' can only contain alphanumeric characters and '_', exiting.".format(label))
+        return re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", label)
 
     @staticmethod
     def _strip_comments(raw_data):
