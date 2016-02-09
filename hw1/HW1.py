@@ -408,9 +408,7 @@ class Parser(object):
                 if instruction.opcode == 'ildc':
                     if instruction.arg is None:
                         print_error("ildc must have an argument.")
-                    try:
-                        int(instruction.arg) # ildc's argument must be a valid int
-                    except:
+                    if re.match(r"(?:-?[1-9][0-9]*)|0", instruction.arg) is None:
                         print_error("Invalid immediate number '{0}', exiting".format(instruction.arg))
                 else:
                     if not self._is_label_valid(instruction.arg):
