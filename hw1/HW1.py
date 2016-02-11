@@ -1,16 +1,6 @@
 from __future__ import print_function # gives us Python 3's print backported 
 import sys, re
 
-# TODO:
-# Should we allow integers with a leading zero?
-# What about leading pluses ('+')?
-# Relevant line in the HW:
-#     An integer num is a sequence of numeric characters, optionally preceded by a minus ("-")
-#
-# Remove 'Final value is:' before hand-in
-#
-# Remove TEST opcode before hand-in
-
 class Stack(object):
     """Basic implementation of a stack data structure.
 
@@ -184,9 +174,6 @@ class Program(object):
                 address = self._stack.pop()
                 self._store[address] = value
                 print_debug(self._store)
-
-            elif op == 'TEST':
-                print_debug(self._stack)
 
             else:
                 print_error("Instruction not found '{0}'".format(op))
@@ -490,4 +477,4 @@ if __name__ == "__main__":
     parser.validate_program() # Verify program before running it
 
     result = parser.program.execute() # Finally execute
-    print("Final value is: {0}".format(result))
+    print("{0}".format(result))
