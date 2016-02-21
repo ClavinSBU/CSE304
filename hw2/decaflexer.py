@@ -1,5 +1,3 @@
-# TODO: Comments
-
 reserved = {
 	'boolean': 'BOOLEAN',
 	'break': 'BREAK',
