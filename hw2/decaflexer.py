@@ -70,6 +70,13 @@ t_DOT = r'\.'
 
 t_ignore = " \t" # Ignore whitespace except for newlines
 
+t_ignore_COMMENT = r'//.*'
+
+def t_MULTILINECOMMENT(t):
+	r'/\*(.|\n)*?\*/'
+	# Must be non-greedy otherwise /**/(code)/**/ doesn't scan (code) properly
+	t.lexer.lineno += t.value.count("\n")
+
 # Capture newlines to increment line number
 def t_newline(t):
 	r'\n+'
