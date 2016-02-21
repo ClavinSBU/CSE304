@@ -35,7 +35,7 @@ tokens = [
 	'NOT', 'AND', 'OR', 'EQ', 'NE', 'LT', 'GT', 'LTE', 'GTE',
 	# Assignment Ops = ++ --
 	'EQUALS', 'INC', 'DEC',
-	# Symbols ( ) [ ] { } : ; , .
+	# Symbols ( ) { } : ; , .
 	'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE',
 	'COLON', 'SEMICOLON', 'COMMA', 'DOT'
 ] + list(reserved.values()) # Add the reserved keywords as tokens
