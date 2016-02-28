@@ -1,0 +1,18 @@
+class hello_world{
+
+	// Fields
+	public static int test;
+	private float test2;
+	static boolean test3, test4;
+	Integer test5, test6, test7;
+
+	/* Methods */
+	public static void main() {}
+
+	static int fib(int n) {}
+
+	private IntList insert(int v) {}
+
+	/* Construct*/ /*or*/
+	public hello_world(string name, Device tty) {}
+}
