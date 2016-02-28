@@ -1,4 +1,3 @@
-import ply.yacc as yacc
 from sys import exit
 from decaflexer import tokens
 
@@ -69,6 +68,10 @@ def p_variables(p):
 
 def p_variable(p):
 	'''variable : ID'''
+	# TODO: Get rid of this rule? Not really needed since we don't need
+	# to support array access. Might be a cause of S/R conflicts in the
+	# future. Feel free to replace this rule with just an ID if it solves
+	# any S/R or R/R conflicts.
 	pass
 
 def p_method_decl(p):
@@ -84,7 +87,7 @@ def p_constructor_decl(p):
 	'''constructor_decl : modifier ID LPAREN formals RPAREN block'''
 
 def p_formals(p):
-	'''formals : formal_param formal_param_comma
+	'''formals : formal_param formal_params
 			   | empty'''
 	pass
 
@@ -92,14 +95,15 @@ def p_formal_param(p):
 	'''formal_param : type variable'''
 	pass
 
-def p_formal_param_comma(p):
-	'''formal_param_comma : COMMA formal_param formal_param_comma
-						  | empty'''
+def p_formal_params(p):
+	'''formal_params : COMMA formal_param formal_params
+					 | empty'''
 	pass
 
 def p_block(p):
 	'''block : LBRACE RBRACE'''
-	pass #TODO: add statements and expressions
+	# TODO: add statements and expressions
+	pass
 
 def p_empty(p):
 	'empty :'
