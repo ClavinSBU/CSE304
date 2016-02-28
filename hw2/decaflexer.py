@@ -1,3 +1,7 @@
+from __future__ import print_function
+from sys import exit
+
+
 reserved = {
 	'boolean': 'BOOLEAN',
 	'break': 'BREAK',
@@ -86,5 +90,13 @@ def t_ID(t):
 	return t
 
 def t_error(t):
-	print("Illegal character '{0}'".format(t.value[0]))
-	t.lexer.skip(1)
+	last_newline = t.lexer.lexdata.rfind('\n', 0, t.lexpos)
+	if last_newline < 0:
+		last_newline = 0
+	next_newline = t.lexer.lexdata.find('\n', t.lexpos)
+	column = t.lexpos - last_newline
+
+	print("Illegal character '{0}' found on line {1}, column {2}:".format(
+		t.value[0], last_newline, column))
+	print(t.lexer.lexdata[last_newline+1:next_newline])
+	exit(1)
