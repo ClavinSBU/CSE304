@@ -4,7 +4,7 @@ from decaflexer import tokens
 
 precedence = ()
 
-def p_prog(p):
+def p_program(p):
 	'''program : class program
 			   | empty'''
 	pass
