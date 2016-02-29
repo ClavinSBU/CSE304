@@ -1,7 +1,6 @@
 from __future__ import print_function
 from sys import exit
 
-
 reserved = {
 	'boolean': 'BOOLEAN',
 	'break': 'BREAK',
@@ -97,6 +96,8 @@ def t_error(t):
 	column = t.lexpos - last_newline
 
 	print("Illegal character '{0}' found on line {1}, column {2}:".format(
-		t.value[0], last_newline, column))
+		t.value[0], t.lexer.lineno, column))
 	print(t.lexer.lexdata[last_newline+1:next_newline])
+	
+	print("Exiting now.")
 	exit(1)

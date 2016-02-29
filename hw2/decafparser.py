@@ -1,7 +1,6 @@
+from __future__ import print_function
 from sys import exit
 from decaflexer import tokens
-
-precedence = ()
 
 def p_program(p):
 	'''program : class program
@@ -110,10 +109,18 @@ def p_empty(p):
 	pass
 
 def p_error(p):
-	if p is not None:
-		print("Syntax error on line {0} around token '{1}'".format(p.lineno, p.value))
+	if p is None:
+		print("Unexcepted end of file!")
 	else:
-		print("Unexpected end of file!")
-
+		last_newline = p.lexer.lexdata.rfind('\n', 0, p.lexpos)
+		if last_newline < 0:
+			last_newline = 0
+		next_newline = p.lexer.lexdata.find('\n', p.lexpos)
+		column = p.lexpos - last_newline
+		
+		print("Syntax error around '{0}' found on line {1}, column {2}:".format(
+			p.value, p.lexer.lineno, column))
+		print(p.lexer.lexdata[last_newline+1:next_newline])
+	
 	print("Exiting now.")
 	exit(1)
