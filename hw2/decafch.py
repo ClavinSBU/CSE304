@@ -7,15 +7,15 @@ import decaflexer
 import decafparser
 
 if __name__ == '__main__':
-	if len(sys.argv) != 2:
-		print("usage: python decafch.py <file>")
-		sys.exit(1)
+    if len(sys.argv) != 2:
+        print("usage: python decafch.py <file>")
+        sys.exit(1)
 
-	with open(sys.argv[1]) as f:
-		data = f.read()
-		lexer = lex.lex(module=decaflexer)
-		parser = yacc.yacc(module=decafparser)
-		parser.parse(data)
+    with open(sys.argv[1]) as f:
+        data = f.read()
+        lexer = lex.lex(module=decaflexer)
+        parser = yacc.yacc(module=decafparser)
+        parser.parse(data)
 
-		# Parse successful
-		print ("Parse successful!")
+        # Parse successful
+        print ("Parse successful!")
