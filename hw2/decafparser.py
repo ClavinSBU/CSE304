@@ -100,8 +100,117 @@ def p_formal_params(p):
     pass
 
 def p_block(p):
-    '''block : LBRACE RBRACE'''
+    '''block : LBRACE stmt stmts RBRACE'''
     # TODO: add statements and expressions
+    pass
+
+def p_stmts(p):
+    '''stmts : stmt stmts
+             | empty'''
+    pass
+
+def p_stmt(p):
+    '''stmt : IF LPAREN expr RPAREN stmt
+            | IF LPAREN expr RPAREN stmt ELSE stmt
+            | WHILE LPAREN expr RPAREN stmt
+            | FOR LPAREN stmt_expr SEMICOLON expr SEMICOLON stmt_expr RPAREN stmt
+            | RETURN expr SEMICOLON
+            | stmt_expr SEMICOLON
+            | BREAK SEMICOLON
+            | CONTINUE SEMICOLON
+            | block
+            | var_decl
+            | SEMICOLON
+            | empty'''
+    pass
+
+def p_expr(p):
+    '''expr : primary
+            | assign
+            | expr arith_op expr
+            | expr bool_op expr
+            | unary_op expr
+            | empty'''
+    pass
+
+def p_primary(p):
+    '''primary : literal
+               | THIS
+               | SUPER
+               | LPAREN expr RPAREN
+               | NEW ID LPAREN arguments RPAREN
+               | lhs
+               | method_invocation'''
+    pass
+
+def p_assign(p):
+    '''assign : lhs EQUALS expr
+              | lhs INC
+              | INC lhs
+              | lhs DEC
+              | DEC lhs'''
+    pass
+
+def p_stmt_expr(p):
+    '''stmt_expr : assign
+                 | method_invocation
+                 | empty'''
+    pass
+
+def p_arith_op(p):
+    '''arith_op : PLUS
+                | MINUS
+                | MULT
+                | DIV'''
+    pass
+
+def p_bool_op(p):
+    '''bool_op : AND
+               | OR
+               | EQ
+               | NE
+               | LT
+               | GT
+               | LTE
+               | GTE'''
+    pass
+
+def p_unary_op(p):
+    '''unary_op : PLUS
+                | MINUS
+                | NOT'''
+    pass
+
+def p_literal(p):
+    '''literal : INTCONST
+               | FLOATCONST
+               | STRINGCONST
+               | NULL
+               | TRUE
+               | FALSE'''
+    pass
+
+def p_arguments(p):
+    '''arguments : expr arguments_s'''
+    pass
+
+def p_arguments_s(p):
+    '''arguments_s : COMMA arguments arguments_s
+                   | empty'''
+    #TODO: rename this function, or set convention for these types of helper functions
+    pass
+
+def p_lhs(p):
+    '''lhs : field_access'''
+    pass
+
+def p_field_access(p):
+    '''field_access : primary DOT ID
+                    | ID'''
+    pass
+
+def p_method_invocation(p):
+    '''method_invocation : field_access LPAREN arguments RPAREN'''
     pass
 
 def p_empty(p):
