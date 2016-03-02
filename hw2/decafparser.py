@@ -131,6 +131,7 @@ def p_expr(p):
             | expr bool_op expr
             | unary_op expr
             | empty'''
+    #TODO: add new_array
     pass
 
 def p_primary(p):
@@ -150,6 +151,8 @@ def p_assign(p):
               | lhs DEC
               | DEC lhs'''
     pass
+
+#TODO: add new_array definition
 
 def p_stmt_expr(p):
     '''stmt_expr : assign
@@ -202,12 +205,15 @@ def p_arguments_s(p):
 
 def p_lhs(p):
     '''lhs : field_access'''
+    #TODO: add array_access when we get to the point where 304 has to do arrays
     pass
 
 def p_field_access(p):
     '''field_access : primary DOT ID
                     | ID'''
     pass
+
+#TODO: add array_access definition
 
 def p_method_invocation(p):
     '''method_invocation : field_access LPAREN arguments RPAREN'''
