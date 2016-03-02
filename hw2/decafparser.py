@@ -177,7 +177,8 @@ def p_field_access(p):
 #TODO: add array_access definition
 
 def p_method_invocation(p):
-    '''method_invocation : field_access LPAREN arguments RPAREN'''
+    '''method_invocation : field_access LPAREN arguments RPAREN
+                         | field_access LPAREN RPAREN'''
     pass
 
 def p_expr(p):
