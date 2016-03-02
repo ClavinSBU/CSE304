@@ -149,6 +149,7 @@ def p_primary(p):
                | SUPER
                | LPAREN expr RPAREN
                | NEW ID LPAREN arguments RPAREN
+               | NEW ID LPAREN RPAREN
                | lhs
                | method_invocation'''
     pass
@@ -158,7 +159,7 @@ def p_arguments(p):
     pass
 
 def p_arguments_s(p):
-    '''arguments_s : COMMA arguments arguments_s
+    '''arguments_s : COMMA expr arguments_s
                    | empty'''
     #TODO: rename this function, or set convention for these types of helper functions
     pass
