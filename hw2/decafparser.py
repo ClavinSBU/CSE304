@@ -115,8 +115,7 @@ def p_stmt(p):
             | CONTINUE SEMICOLON
             | block
             | var_decl
-            | SEMICOLON
-            | empty'''
+            | SEMICOLON'''
     pass
 
 def p_stmts(p):
