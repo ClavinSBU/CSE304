@@ -3,14 +3,14 @@ from sys import exit
 from decaflexer import tokens
 
 precedence = (
-	('right', 'EQUALS'),
-	('left', 'OR'),
-	('left', 'AND'),
-	('left', 'EQ', 'NE'),
-	('nonassoc', 'LT', 'GT', 'LTE', 'GTE'),
-	('left', 'PLUS', 'MINUS'),
-	('left', 'MULT', 'DIV'),
-	('right', 'UMINUS', 'UPLUS', 'NOT')
+    ('right', 'EQUALS'),
+    ('left', 'OR'),
+    ('left', 'AND'),
+    ('left', 'EQ', 'NE'),
+    ('nonassoc', 'LT', 'GT', 'LTE', 'GTE'),
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'MULT', 'DIV'),
+    ('right', 'UMINUS', 'UPLUS', 'NOT')
 )
 
 def p_program(p):
@@ -184,9 +184,21 @@ def p_method_invocation(p):
 def p_expr(p):
     '''expr : primary
             | assign
-            | expr arith_op expr
-            | expr bool_op expr
-            | unary_op expr'''
+            | expr PLUS expr
+            | expr MINUS expr
+            | expr MULT expr
+            | expr DIV expr
+            | expr AND expr
+            | expr OR expr
+            | expr EQ expr
+            | expr NE expr
+            | expr LT expr
+            | expr GT expr
+            | expr LTE expr
+            | expr GTE expr
+            | PLUS expr %prec UPLUS
+            | MINUS expr %prec UMINUS
+            | NOT expr'''
     #TODO: add new_array
     pass
 
@@ -202,32 +214,7 @@ def p_assign(p):
               | lhs DEC
               | DEC lhs'''
     pass
-
-#TODO: add new_array definition
-
-def p_arith_op(p):
-    '''arith_op : PLUS
-                | MINUS
-                | MULT
-                | DIV'''
-    pass
-
-def p_bool_op(p):
-    '''bool_op : AND
-               | OR
-               | EQ
-               | NE
-               | LT
-               | GT
-               | LTE
-               | GTE'''
-    pass
-
-def p_unary_op(p):
-    '''unary_op : PLUS %prec UPLUS
-                | MINUS %prec UMINUS
-                | NOT'''
-    pass
+    #TODO: add new_array definition
 
 def p_stmt_expr(p):
     '''stmt_expr : assign
