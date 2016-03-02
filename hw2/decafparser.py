@@ -53,7 +53,6 @@ def p_modifier(p):
                 | PRIVATE STATIC
                 | STATIC
                 | empty'''
-    # TODO: Better to enumerate like this or to separate into distinct rules?
     pass
 
 def p_var_decl(p):
@@ -78,10 +77,6 @@ def p_variables(p):
 
 def p_variable(p):
     '''variable : ID'''
-    # TODO: Get rid of this rule? Not really needed since we don't need
-    # to support array access. Might be a cause of S/R conflicts in the
-    # future. Feel free to replace this rule with just an ID if it solves
-    # any S/R or R/R conflicts.
     pass
 
 def p_method_decl(p):
@@ -112,7 +107,6 @@ def p_formal_params(p):
 
 def p_block(p):
     '''block : LBRACE stmts RBRACE'''
-    # TODO: add statements and expressions
     pass
 
 def p_stmt(p):
@@ -161,20 +155,16 @@ def p_arguments(p):
 def p_arguments_s(p):
     '''arguments_s : COMMA expr arguments_s
                    | empty'''
-    #TODO: rename this function, or set convention for these types of helper functions
     pass
 
 def p_lhs(p):
     '''lhs : field_access'''
-    #TODO: add array_access when we get to the point where 304 has to do arrays
     pass
 
 def p_field_access(p):
     '''field_access : primary DOT ID
                     | ID'''
     pass
-
-#TODO: add array_access definition
 
 def p_method_invocation(p):
     '''method_invocation : field_access LPAREN arguments RPAREN
@@ -199,7 +189,11 @@ def p_expr(p):
             | PLUS expr %prec UPLUS
             | MINUS expr %prec UMINUS
             | NOT expr'''
-    #TODO: add new_array
+    # The operators are all enumerated out in this rule instead of abstracted
+    # into separate arith_op, bool_op, or unary_op rules so that yacc can
+    # reason about the precedence and associativity rules defined above. If we
+    # were to move these rules into separate operator rules, the parser would
+    # lose the precedence and associativity information.
     pass
 
 def p_expr_empty(p):
@@ -214,7 +208,6 @@ def p_assign(p):
               | lhs DEC
               | DEC lhs'''
     pass
-    #TODO: add new_array definition
 
 def p_stmt_expr(p):
     '''stmt_expr : assign
