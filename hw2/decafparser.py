@@ -119,8 +119,8 @@ def p_stmt(p):
     '''stmt : IF LPAREN expr RPAREN stmt
             | IF LPAREN expr RPAREN stmt ELSE stmt
             | WHILE LPAREN expr RPAREN stmt
-            | FOR LPAREN stmt_expr SEMICOLON expr SEMICOLON stmt_expr RPAREN stmt
-            | RETURN expr SEMICOLON
+            | FOR LPAREN stmt_expr_empty SEMICOLON expr_empty SEMICOLON stmt_expr_empty RPAREN stmt
+            | RETURN expr_empty SEMICOLON
             | stmt_expr SEMICOLON
             | BREAK SEMICOLON
             | CONTINUE SEMICOLON
@@ -184,9 +184,13 @@ def p_expr(p):
             | assign
             | expr arith_op expr
             | expr bool_op expr
-            | unary_op expr
-            | empty'''
+            | unary_op expr'''
     #TODO: add new_array
+    pass
+
+def p_expr_empty(p):
+    '''expr_empty : expr
+                  | empty'''
     pass
 
 def p_assign(p):
@@ -225,9 +229,12 @@ def p_unary_op(p):
 
 def p_stmt_expr(p):
     '''stmt_expr : assign
-                 | method_invocation
-                 | empty'''
+                 | method_invocation'''
     pass
+
+def p_stmt_expr_empty(p):
+    '''stmt_expr_empty : stmt_expr
+                       | empty'''
 
 def p_empty(p):
     'empty :'
