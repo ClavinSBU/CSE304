@@ -2,6 +2,17 @@ from __future__ import print_function
 from sys import exit
 from decaflexer import tokens
 
+precedence = (
+	('right', 'EQUALS'),
+	('left', 'OR'),
+	('left', 'AND'),
+	('left', 'EQ', 'NE'),
+	('nonassoc', 'LT', 'GT', 'LTE', 'GTE'),
+	('left', 'PLUS', 'MINUS'),
+	('left', 'MULT', 'DIV'),
+	('right', 'UMINUS', 'UPLUS', 'NOT')
+)
+
 def p_program(p):
     '''program : class program
                | empty'''
@@ -176,8 +187,8 @@ def p_bool_op(p):
     pass
 
 def p_unary_op(p):
-    '''unary_op : PLUS
-                | MINUS
+    '''unary_op : PLUS %prec UPLUS
+                | MINUS %prec UMINUS
                 | NOT'''
     pass
 
