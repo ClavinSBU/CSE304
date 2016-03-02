@@ -111,13 +111,8 @@ def p_formal_params(p):
     pass
 
 def p_block(p):
-    '''block : LBRACE stmt stmts RBRACE'''
+    '''block : LBRACE stmts RBRACE'''
     # TODO: add statements and expressions
-    pass
-
-def p_stmts(p):
-    '''stmts : stmt stmts
-             | empty'''
     pass
 
 def p_stmt(p):
@@ -131,17 +126,21 @@ def p_stmt(p):
             | CONTINUE SEMICOLON
             | block
             | var_decl
-            | SEMICOLON
-            | empty'''
+            | SEMICOLON'''
     pass
 
-def p_expr(p):
-    '''expr : primary
-            | assign
-            | expr arith_op expr
-            | expr bool_op expr
-            | unary_op expr
-            | empty'''
+def p_stmts(p):
+    '''stmts : stmt stmts
+             | empty'''
+    pass
+
+def p_literal(p):
+    '''literal : INTCONST
+               | FLOATCONST
+               | STRINGCONST
+               | NULL
+               | TRUE
+               | FALSE'''
     pass
 
 def p_primary(p):
@@ -154,6 +153,42 @@ def p_primary(p):
                | method_invocation'''
     pass
 
+def p_arguments(p):
+    '''arguments : expr arguments_s'''
+    pass
+
+def p_arguments_s(p):
+    '''arguments_s : COMMA arguments arguments_s
+                   | empty'''
+    #TODO: rename this function, or set convention for these types of helper functions
+    pass
+
+def p_lhs(p):
+    '''lhs : field_access'''
+    #TODO: add array_access when we get to the point where 304 has to do arrays
+    pass
+
+def p_field_access(p):
+    '''field_access : primary DOT ID
+                    | ID'''
+    pass
+
+#TODO: add array_access definition
+
+def p_method_invocation(p):
+    '''method_invocation : field_access LPAREN arguments RPAREN'''
+    pass
+
+def p_expr(p):
+    '''expr : primary
+            | assign
+            | expr arith_op expr
+            | expr bool_op expr
+            | unary_op expr
+            | empty'''
+    #TODO: add new_array
+    pass
+
 def p_assign(p):
     '''assign : lhs EQUALS expr
               | lhs INC
@@ -162,11 +197,7 @@ def p_assign(p):
               | DEC lhs'''
     pass
 
-def p_stmt_expr(p):
-    '''stmt_expr : assign
-                 | method_invocation
-                 | empty'''
-    pass
+#TODO: add new_array definition
 
 def p_arith_op(p):
     '''arith_op : PLUS
@@ -192,36 +223,10 @@ def p_unary_op(p):
                 | NOT'''
     pass
 
-def p_literal(p):
-    '''literal : INTCONST
-               | FLOATCONST
-               | STRINGCONST
-               | NULL
-               | TRUE
-               | FALSE'''
-    pass
-
-def p_arguments(p):
-    '''arguments : expr arguments_s'''
-    pass
-
-def p_arguments_s(p):
-    '''arguments_s : COMMA arguments arguments_s
-                   | empty'''
-    #TODO: rename this function, or set convention for these types of helper functions
-    pass
-
-def p_lhs(p):
-    '''lhs : field_access'''
-    pass
-
-def p_field_access(p):
-    '''field_access : primary DOT ID
-                    | ID'''
-    pass
-
-def p_method_invocation(p):
-    '''method_invocation : field_access LPAREN arguments RPAREN'''
+def p_stmt_expr(p):
+    '''stmt_expr : assign
+                 | method_invocation
+                 | empty'''
     pass
 
 def p_empty(p):
