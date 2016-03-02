@@ -100,13 +100,8 @@ def p_formal_params(p):
     pass
 
 def p_block(p):
-    '''block : LBRACE stmt stmts RBRACE'''
+    '''block : LBRACE stmts RBRACE'''
     # TODO: add statements and expressions
-    pass
-
-def p_stmts(p):
-    '''stmts : stmt stmts
-             | empty'''
     pass
 
 def p_stmt(p):
@@ -124,14 +119,18 @@ def p_stmt(p):
             | empty'''
     pass
 
-def p_expr(p):
-    '''expr : primary
-            | assign
-            | expr arith_op expr
-            | expr bool_op expr
-            | unary_op expr
-            | empty'''
-    #TODO: add new_array
+def p_stmts(p):
+    '''stmts : stmt stmts
+             | empty'''
+    pass
+
+def p_literal(p):
+    '''literal : INTCONST
+               | FLOATCONST
+               | STRINGCONST
+               | NULL
+               | TRUE
+               | FALSE'''
     pass
 
 def p_primary(p):
@@ -142,55 +141,6 @@ def p_primary(p):
                | NEW ID LPAREN arguments RPAREN
                | lhs
                | method_invocation'''
-    pass
-
-def p_assign(p):
-    '''assign : lhs EQUALS expr
-              | lhs INC
-              | INC lhs
-              | lhs DEC
-              | DEC lhs'''
-    pass
-
-#TODO: add new_array definition
-
-def p_stmt_expr(p):
-    '''stmt_expr : assign
-                 | method_invocation
-                 | empty'''
-    pass
-
-def p_arith_op(p):
-    '''arith_op : PLUS
-                | MINUS
-                | MULT
-                | DIV'''
-    pass
-
-def p_bool_op(p):
-    '''bool_op : AND
-               | OR
-               | EQ
-               | NE
-               | LT
-               | GT
-               | LTE
-               | GTE'''
-    pass
-
-def p_unary_op(p):
-    '''unary_op : PLUS
-                | MINUS
-                | NOT'''
-    pass
-
-def p_literal(p):
-    '''literal : INTCONST
-               | FLOATCONST
-               | STRINGCONST
-               | NULL
-               | TRUE
-               | FALSE'''
     pass
 
 def p_arguments(p):
@@ -217,6 +167,56 @@ def p_field_access(p):
 
 def p_method_invocation(p):
     '''method_invocation : field_access LPAREN arguments RPAREN'''
+    pass
+
+def p_expr(p):
+    '''expr : primary
+            | assign
+            | expr arith_op expr
+            | expr bool_op expr
+            | unary_op expr
+            | empty'''
+    #TODO: add new_array
+    pass
+
+def p_assign(p):
+    '''assign : lhs EQUALS expr
+              | lhs INC
+              | INC lhs
+              | lhs DEC
+              | DEC lhs'''
+    pass
+
+#TODO: add new_array definition
+
+def p_arith_op(p):
+    '''arith_op : PLUS
+                | MINUS
+                | MULT
+                | DIV'''
+    pass
+
+def p_bool_op(p):
+    '''bool_op : AND
+               | OR
+               | EQ
+               | NE
+               | LT
+               | GT
+               | LTE
+               | GTE'''
+    pass
+
+def p_unary_op(p):
+    '''unary_op : PLUS
+                | MINUS
+                | NOT'''
+    pass
+
+def p_stmt_expr(p):
+    '''stmt_expr : assign
+                 | method_invocation
+                 | empty'''
     pass
 
 def p_empty(p):
