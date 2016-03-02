@@ -36,9 +36,9 @@ tokens = [
     'NOT', 'AND', 'OR', 'EQ', 'NE', 'LT', 'GT', 'LTE', 'GTE',
     # Assignment Ops = ++ --
     'EQUALS', 'INC', 'DEC',
-    # Symbols ( ) { } : ; , .
+    # Symbols ( ) { } ; , .
     'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE',
-    'COLON', 'SEMICOLON', 'COMMA', 'DOT'
+    'SEMICOLON', 'COMMA', 'DOT'
 ] + list(reserved.values()) # Add the reserved keywords as tokens
 
 t_INTCONST = r'\d+'
@@ -64,7 +64,6 @@ t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LBRACE = r'\{'
 t_RBRACE = r'\}'
-t_COLON = r':'
 t_SEMICOLON = r';'
 t_COMMA = r','
 t_DOT = r'\.'
