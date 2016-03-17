@@ -7,10 +7,19 @@ import sys
 import getopt
 
 import decafparser
+import ast
 
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
+
+
+def print_ast(class_table):
+    sep = '\n'+('*'*77)+'\n'
+    print '*'*77
+    print sep.join([str(cls) for cls in class_table])
+    print '*'*77
+
 
 def main(argv=None):
     if argv is None:
@@ -36,6 +45,7 @@ def main(argv=None):
         infile = filename + ".decaf"
         if decafparser.from_file(infile):
             print "No syntax errors found."
+            print_ast(ast.DecafClass.table)
         else:
             print "Failure: there were errors."
     except Usage, err:

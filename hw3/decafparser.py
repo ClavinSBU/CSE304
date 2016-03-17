@@ -1,8 +1,8 @@
 import ply.yacc as yacc
 import decaflexer
 from decaflexer import tokens
-#from decaflexer import errorflag
 from decaflexer import lex
+import ast
 
 import sys
 import logging
@@ -40,7 +40,7 @@ def p_class_decl_list_empty(p):
 
 def p_class_decl(p):
     'class_decl : CLASS ID extends LBRACE class_body_decl_list RBRACE'
-    pass
+    ast.DecafClass(p[2], p[3])
 def p_class_decl_error(p):
     'class_decl : CLASS ID extends LBRACE error RBRACE'
     # error in class declaration; skip to next class decl.
@@ -48,10 +48,10 @@ def p_class_decl_error(p):
 
 def p_extends_id(p):
     'extends : EXTENDS ID '
-    pass
+    p[0] = p[2]
 def p_extends_empty(p):
     ' extends : '
-    pass
+    p[0] = None
 
 def p_class_body_decl_list_plus(p):
     'class_body_decl_list : class_body_decl_list class_body_decl'
@@ -75,7 +75,10 @@ def p_class_body_decl_constructor(p):
 
 def p_field_decl(p):
     'field_decl : mod var_decl'
-    pass
+    p[0] = p[1]  # Syntheize visibility and applicability
+    for var in p[2]['vars']:
+        ast.DecafField(var, p[0]['visibility'], p[0]['applicability'])
+    ast.DecafVariable.reset_ids()  # Ensure the ids start at zero for the next body
 
 def p_method_decl_void(p):
     'method_decl : mod VOID ID LPAREN param_list_opt RPAREN block'
@@ -91,52 +94,56 @@ def p_constructor_decl(p):
 
 def p_mod(p):
     'mod : visibility_mod storage_mod'
-    pass
+    p[0] = {'visibility': p[1], 'applicability': p[2]}
 
 def p_visibility_mod_pub(p):
     'visibility_mod : PUBLIC'
-    pass
+    p[0] = 'public'
 def p_visibility_mod_priv(p):
     'visibility_mod : PRIVATE'
-    pass
+    p[0] = 'private'
 def p_visibility_mod_empty(p):
     'visibility_mod : '
-    pass
+    p[0] = 'public'
 
 def p_storage_mod_static(p):
     'storage_mod : STATIC'
-    pass
+    p[0] = 'class'
 def p_storage_mod_empty(p):
     'storage_mod : '
-    pass
+    p[0] = 'instance'
 
 def p_var_decl(p):
     'var_decl : type var_list SEMICOLON'
-    pass
+    p[0] = {'type': p[1], 'vars': p[2]['vars']}
+    for var in p[0]['vars']:
+        var.type = p[0]['type']
+    ast.DecafVariable.reset_ids()
 
 def p_type_int(p):
     'type :  INT'
-    pass
+    p[0] = ast.DecafType.int()
 def p_type_bool(p):
     'type :  BOOLEAN'
-    pass
+    p[0] = ast.DecafType.boolean()
 def p_type_float(p):
     'type :  FLOAT'
-    pass
+    p[0] = ast.DecafType.float()
 def p_type_id(p):
     'type :  ID'
-    pass
+    p[0] = ast.DecafType.user_defined(p[1])
 
 def p_var_list_plus(p):
     'var_list : var_list COMMA var'
-    pass
+    p[0] = {'vars': p[1]['vars']}
+    p[0]['vars'].append(p[3])
 def p_var_list_single(p):
     'var_list : var'
-    pass
+    p[0] = {'vars': [p[1]]}
 
 def p_var_id(p):
     'var : ID'
-    pass
+    p[0] = ast.DecafVariable(p[1])
 def p_var_array(p):
     'var : var LBRACKET RBRACKET'
     pass

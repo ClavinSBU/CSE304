@@ -1,14 +1,23 @@
 class DecafClass(object):
-    class_table = []
+    # Stores a list of all classes parsed so far
+    table = []
 
-    def __init__(self, name, super_class_name=None):
+    def __init__(self, name, super_class_name):
         self._name = name
         self._super_class = super_class_name
-        self._fields = []
-        self._methods = []
-        self._constructors = []
+        self._fields = DecafField.context
+        self._methods = DecafMethod.context
+        self._constructors = DecafConstructor.context
 
-        DecafClass.class_table.append(self)
+        # The context list does not make sense for classes, so we just
+        # insert the new class into the table list.
+        self.table.append(self)
+
+        # Set the classes of all previously seen fields, methods, and tables
+        # and flush their context
+        DecafConstructor.flush_context(name)
+        DecafField.flush_context(name)
+        DecafMethod.flush_context(name)
 
     @property
     def name(self):
@@ -33,21 +42,32 @@ class DecafClass(object):
     def constructors(self):
         return self._constructors
 
-    def add_field(self, field):
-        self._fields.append(field)
-
-    def add_method(self, method):
-        self._methods.append(method)
-
-    def add_constructor(self, constructor):
-        self._constructors.append(constructor)
-
     def __str__(self):
-        pass  # TODO
+        # Use a list of strings to build the result string. They will be
+        # .join()'d later. This is more efficient than concatenating them.
+        slist = []
+        slist.append('Class Name: {}'.format(self.name))
+        slist.append('Superclass Name: {}'.format(self.super_class))
+        slist.append('Fields:')
+        for field in self.fields:
+            slist.append('{}'.format(field))
+        slist.append('Constructors:')
+        for constructor in self.constructors:
+            slist.append('{}'.format(constructor))
+        slist.append('Methods:')
+        for method in self.methods:
+            slist.append('{}'.format(method))
+        return '\n'.join(slist)
 
 
 class DecafConstructor(object):
-    constructor_table = []
+    __auto_id = 1
+
+    # Stores a list of all constructors belonging to a class already seen.
+    table = []
+    # Stores a list of all constructors belonging to the class currently being
+    # parsed.
+    context = []
 
     def __init__(self, ident, visibility, parameters, var_table, body):
         self._id = ident
@@ -56,7 +76,7 @@ class DecafConstructor(object):
         self._var_table = var_table
         self._body = body
 
-        DecafConstructor.constructor_table.append(self)
+        self.context.append(self)
 
     @property
     def id(self):
@@ -78,23 +98,40 @@ class DecafConstructor(object):
     def body(self):
         return self._body
 
+    @classmethod
+    def get_new_id(cls):
+        ident = cls.__auto_id
+        cls.__auto_id += 1
+        return ident
+
+    @classmethod
+    def flush_context(cls, class_name):
+        '''Move all constructors from the context list to the table list.'''
+        cls.table += cls.context
+        cls.context = []
+
     def __str__(self):
         pass  # TODO
 
 
 class DecafField(object):
-    field_table = []
+    __auto_id = 1
 
-    def __init__(self, name, ident, decaf_class, visibility, applicability,
-                 decaf_type):
-        self._name = name
-        self._id = ident
-        self._class = decaf_class
+    # Stores a list of all fields belonging to a class already seen.
+    table = []
+    # Stores a list of all fields belonging to the class currently being
+    # parsed.
+    context = []
+
+    def __init__(self, var, visibility, applicability):
+        self._name = var.name
+        self._id = self.get_new_id()
+        self._class = None
         self._visibility = visibility
         self._applicability = applicability
-        self._type = decaf_type
+        self._type = var.type
 
-        DecafField.field_table.append(self)
+        self.context.append(self)
 
     @property
     def name(self):
@@ -106,7 +143,10 @@ class DecafField(object):
 
     @property
     def decaf_class(self):
-        return self._class
+        if self._class is None:
+            return ""
+        else:
+            return self._class
 
     @property
     def visibility(self):
@@ -120,18 +160,41 @@ class DecafField(object):
     def decaf_type(self):
         return self._type
 
+    @classmethod
+    def flush_context(cls, class_name):
+        '''Move all fields from the context list to the table list.
+
+        Also sets the class attributes of those fields'''
+        for field in cls.context:
+            field._class = class_name
+        cls.table += cls.context
+        cls.context = []
+
+    @classmethod
+    def get_new_id(cls):
+        ident = cls.__auto_id
+        cls.__auto_id += 1
+        return ident
+
     def __str__(self):
-        pass  # TODO
+        return ('FIELD {_id}, {_name}, {_class}, {_visibility}, '
+                '{_applicability}, {_type}').format(**vars(self))
 
 
 class DecafMethod(object):
-    method_table = []
+    __auto_id = 1
 
-    def __init__(self, name, ident, decaf_class, visibility, applicability,
+    # Stores a list of all methods belonging to a class already seen.
+    table = []
+    # Stores a list of all methods belonging to the class currently being
+    # parsed.
+    context = []
+
+    def __init__(self, name, visibility, applicability,
                  parameters, return_type, var_table, body):
         self._name = name
-        self._id = ident
-        self._class = decaf_class
+        self._id = self.get_new_id()
+        self._class = None
         self._visibility = visibility
         self._applicability = applicability
         self._parameters = parameters
@@ -139,7 +202,7 @@ class DecafMethod(object):
         self._var_table = var_table
         self._body = body
 
-        DecafMethod.method_table.append(self)
+        self.context.append(self)
 
     @property
     def name(self):
@@ -151,7 +214,10 @@ class DecafMethod(object):
 
     @property
     def decaf_class(self):
-        return self._class
+        if self._class is None:
+            return ''
+        else:
+            return self._class
 
     @property
     def visibility(self):
@@ -177,16 +243,37 @@ class DecafMethod(object):
     def body(self):
         return self._body
 
+    @classmethod
+    def flush_context(cls, class_name):
+        '''Move all methods from the context list to the table list.
+
+        Also sets the class attributes of those methods'''
+        for method in cls.context:
+            method._class = class_name
+        cls.table += cls.context
+        cls.context = []
+
+    @classmethod
+    def get_new_id(cls):
+        ident = cls.__auto_id
+        cls.__auto_id += 1
+        return ident
+
     def __str__(self):
         pass  # TODO
 
 
 class DecafVariable(object):
-    def __init__(self, name, ident, kind, decaf_type):
+    __auto_id = 1
+
+    def __init__(self, name):
+        '''Represents a variable in the Decaf language.
+
+        This class is also used in parsing fields.'''
         self._name = name
-        self._id = ident
-        self._kind = kind
-        self._type = decaf_type
+        self._id = self.get_new_id()
+        self._kind = None
+        self._type = None
 
     @property
     def name(self):
@@ -198,11 +285,31 @@ class DecafVariable(object):
 
     @property
     def kind(self):
-        return self._kind
+        if self._kind is None:
+            return ""
+        else:
+            return self._kind
 
     @property
     def type(self):
-        return self._type
+        if self._type is None:
+            return ""
+        else:
+            return self._type
+
+    @type.setter
+    def type(self, value):
+        self._type = value
+
+    @classmethod
+    def get_new_id(cls):
+        ident = cls.__auto_id
+        cls.__auto_id += 1
+        return ident
+
+    @classmethod
+    def reset_ids(cls):
+        cls.__auto_id = 0
 
     def __str__(self):
         pass  # TODO
@@ -234,7 +341,7 @@ class DecafType(object):
 
     @staticmethod
     def user_defined(class_name):
-        return DecafType(class_name)
+        return DecafType('user({})'.format(class_name))
 
     def __str__(self):
-        pass  # TODO
+        return self.type
