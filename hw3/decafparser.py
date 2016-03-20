@@ -40,12 +40,18 @@ def p_class_decl_list_empty(p):
     pass
 
 def p_class_decl(p):
-    'class_decl : CLASS ID extends LBRACE class_body_decl_list RBRACE'
-    ast.DecafClass(p[2], p[3])
+    'class_decl : class_name extends LBRACE class_body_decl_list RBRACE'
+    ast.DecafClass(p[1], p[2])
 def p_class_decl_error(p):
-    'class_decl : CLASS ID extends LBRACE error RBRACE'
+    'class_decl : class_name extends LBRACE error RBRACE'
     # error in class declaration; skip to next class decl.
-    pass
+    ast.DecafConstructor.flushContext(None)
+    ast.DecafField.flushContext(None)
+    ast.DecafMethod.flushContext(None)
+def p_class_name(p):
+    'class_name : CLASS ID'
+    ast.DecafClass.current_class = p[2]
+    p[0] = p[2]
 
 def p_extends_id(p):
     'extends : EXTENDS ID '
@@ -83,17 +89,25 @@ def p_field_decl(p):
     ast.DecafVariable.flush_context()
 
 def p_method_decl_void(p):
-    'method_decl : mod VOID ID LPAREN param_list_opt RPAREN block'
+    'method_decl : mod VOID method_name LPAREN param_list_opt RPAREN block'
     ast.DecafMethod(p[3], p[1]['visibility'], p[1]['applicability'],
                     ast.DecafType.void(), p[7])
 def p_method_decl_nonvoid(p):
-    'method_decl : mod type ID LPAREN param_list_opt RPAREN block'
+    'method_decl : mod type method_name LPAREN param_list_opt RPAREN block'
     ast.DecafMethod(p[3], p[1]['visibility'], p[1]['applicability'], p[2],
                     p[7])
+def p_method_name(p):
+    'method_name : ID'
+    ast.DecafMethod.current_method = p[1]
+    p[0] = p[1]
 
 def p_constructor_decl(p):
-    'constructor_decl : mod ID LPAREN param_list_opt RPAREN block'
+    'constructor_decl : mod constructor_name LPAREN param_list_opt RPAREN block'
     ast.DecafConstructor(p[1]['visibility'], p[6])
+def p_constructor_name(p):
+    'constructor_name : ID'
+    ast.DecafConstructor.current_constructor = p[1]
+    p[0] = p[1]
 
 
 def p_mod(p):
@@ -177,11 +191,11 @@ def p_param(p):
 
 def p_block(p):
     'block : LBRACE block_begin stmt_list block_end RBRACE'
-    p[0] = None  # TODO
+    p[0] = (p.linespan(0), 'Block', p[3])
 def p_block_error(p):
     'block : LBRACE block_begin stmt_list error block_end RBRACE'
     # error within a block; skip to enclosing block
-    p[0] = None  # TODO
+    p[0] = (p.linespan(0), 'Block', p[3])
 def p_block_begin(p):
     'block_begin : '
     ast.DecafVariable.push_block()
@@ -196,8 +210,13 @@ def p_stmt_list_empty(p):
     pass
 def p_stmt_list(p):
     'stmt_list : stmt_list stmt'
-    pass
-
+    # We don't want to include var_decls in our method bodies
+    if p[1] is None:
+        p[0] = []
+    else:
+        p[0] = p[1]
+    if p[2] is not None:
+        p[0].append(p[2])
 
 def p_stmt_if(p):
     '''stmt : IF LPAREN expr RPAREN stmt ELSE stmt
@@ -214,7 +233,7 @@ def p_stmt_return(p):
     pass
 def p_stmt_stmt_expr(p):
     'stmt : stmt_expr SEMICOLON'
-    pass
+    p[0] = p[1]
 def p_stmt_break(p):
     'stmt : BREAK SEMICOLON'
     pass
@@ -235,32 +254,32 @@ def p_stmt_error(p):
 # Expressions
 def p_literal_int_const(p):
     'literal : INT_CONST'
-    pass
+    p[0] = (p.linespan(0), 'Integer-constant', p[1])
 def p_literal_float_const(p):
     'literal : FLOAT_CONST'
-    pass
+    p[0] = (p.linespan(0), 'Float-constant', p[1])
 def p_literal_string_const(p):
     'literal : STRING_CONST'
-    pass
+    p[0] = (p.linespan(0), 'String-constant', p[1])
 def p_literal_null(p):
     'literal : NULL'
-    pass
+    p[0] = (p.linespan(0), 'Null-constant')
 def p_literal_true(p):
     'literal : TRUE'
-    pass
+    p[0] = (p.linespan(0), 'True-constant')
 def p_literal_false(p):
     'literal : FALSE'
-    pass
+    p[0] = (p.linespan(0), 'False-constant')
 
 def p_primary_literal(p):
     'primary : literal'
-    pass
+    p[0] = (p.linespan(0), 'Constant', p[1])
 def p_primary_this(p):
     'primary : THIS'
-    pass
+    p[0] = (p.linespan(0), 'This')
 def p_primary_super(p):
     'primary : SUPER'
-    pass
+    p[0] = (p.linespan(0), 'Super')
 def p_primary_paren(p):
     'primary : LPAREN expr RPAREN'
     pass
@@ -269,7 +288,7 @@ def p_primary_newobj(p):
     pass
 def p_primary_lhs(p):
     'primary : lhs'
-    pass
+    p[0] = p[1]
 def p_primary_method_invocation(p):
     'primary : method_invocation'
     pass
@@ -291,14 +310,30 @@ def p_args_single(p):
 def p_lhs(p):
     '''lhs : field_access
            | array_access'''
-    pass
+    p[0] = p[1]
 
 def p_field_access_dot(p):
     'field_access : primary DOT ID'
-    pass
+    p[0] = (p.linespan(0), 'Field-access', p[1], p[3])
 def p_field_access_id(p):
     'field_access : ID'
-    pass
+    # Check if this variable is in scope
+    var = ast.DecafVariable.get_var_in_scope(p[1])
+    if var is not None:
+        # Variable found and in scope
+        p[0] = (p.linespan(0), 'Variable', var.id)
+        return
+    # Otherwise, check if it's a reference to a class
+    if p[1] == ast.DecafClass.current_class:
+        p[0] = (p.linespan(0), 'Class', p[1])
+        return
+    for decaf_class in ast.DecafClass.table:
+        if p[1] == decaf_class.name:
+            p[0] = (p.linespan(0), 'Class', p[1])
+            return
+    # At this point, we have an error
+    print("Unknown class or variable {} at line {}".format(p[1], p.lineno(1)))
+    raise SyntaxError
 
 def p_array_access(p):
     'array_access : primary LBRACKET expr RBRACKET'
@@ -312,7 +347,7 @@ def p_expr_basic(p):
     '''expr : primary
             | assign
             | new_array'''
-    pass
+    p[0] = p[1]
 def p_expr_binop(p):
     '''expr : expr PLUS expr
             | expr MINUS expr
@@ -336,7 +371,7 @@ def p_expr_unop(p):
 
 def p_assign_equals(p):
     'assign : lhs ASSIGN expr'
-    pass
+    p[0] = (p.linespan(0), 'Assign', p[1], p[3])
 def p_assign_post_inc(p):
     'assign : lhs INC'
     pass
@@ -375,7 +410,7 @@ def p_dim_star_empty(p):
 def p_stmt_expr(p):
     '''stmt_expr : assign
                  | method_invocation'''
-    pass
+    p[0] = (p.linespan(0), 'Expr', p[1])
 
 def p_stmt_expr_opt(p):
     'stmt_expr_opt : stmt_expr'
@@ -405,7 +440,8 @@ def from_file(filename):
     try:
         with open(filename, "rU") as f:
             init()
-            parser.parse(f.read(), lexer=lex.lex(module=decaflexer), debug=None)
+            parser.parse(f.read(), lexer=lex.lex(module=decaflexer),
+                         debug=None, tracking=True)
         return not decaflexer.errorflag
     except IOError as e:
         print "I/O error: %s: %s" % (filename, e.strerror)

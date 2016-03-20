@@ -2,6 +2,9 @@ class DecafClass(object):
     # Stores a list of all classes parsed so far
     table = []
 
+    # Stores the name of the class being currently parsed
+    current_class = None
+
     def __init__(self, name, super_class_name):
         self._name = name
         self._super_class = super_class_name
@@ -18,6 +21,8 @@ class DecafClass(object):
         DecafConstructor.flush_context(name)
         DecafField.flush_context(name)
         DecafMethod.flush_context(name)
+
+        self.current_class = None
 
     @property
     def name(self):
@@ -68,6 +73,8 @@ class DecafConstructor(object):
     # Stores a list of all constructors belonging to the class currently being
     # parsed.
     context = []
+    # Stores the name of the constructor currently being parsed
+    current_constructor = None
 
     def __init__(self, visibility, body):
         self._id = self.get_new_id()
@@ -81,6 +88,7 @@ class DecafConstructor(object):
 
         self.context.append(self)
         DecafVariable.flush_context()
+        self.current_constructor = None
 
     @property
     def id(self):
@@ -208,6 +216,8 @@ class DecafMethod(object):
     # Stores a list of all methods belonging to the class currently being
     # parsed.
     context = []
+    # Stores the name of method currently being parsed
+    current_method = None
 
     def __init__(self, name, visibility, applicability, return_type, body):
         self._name = name
@@ -225,6 +235,8 @@ class DecafMethod(object):
 
         self.context.append(self)
         DecafVariable.flush_context()
+
+        self.current_method = None
 
     @property
     def name(self):
@@ -457,8 +469,37 @@ class DecafType(object):
 
 
 def stmt_to_string(stmt):
-    return ''  # TODO
+    # Don't print parentheses simple expression without any sub expressions.
+    if len(stmt) <= 2:
+        return '{}'.format(stmt[1])
 
+    slist = []
+    # Add an extra space for expressions
+    if stmt[1] == 'Expr':
+        slist.append('Expr( ')
+    else:
+        slist.append('{}('.format(stmt[1]))
+
+    sub_list = []
+    for i in stmt[2:]:
+        if type(i) is tuple:
+            sub_list.append(stmt_to_string(i))
+        elif type(i) is list:
+            list_string = "\n,  ".join([stmt_to_string(el) for el in i])
+            if stmt[1] == 'Block':
+                sub_list.append('[\n{}\n]'.format(list_string))
+            else:
+                sub_list.append('[{}]'.format(list_string))
+        else:
+            sub_list.append(str(i))
+    slist.append(', '.join(sub_list))
+
+    # Another extra space for expressions to balance out the one added before.
+    if stmt[1] == 'Expr':
+        slist.append(' )')
+    else:
+        slist.append(')')
+    return ''.join(slist)
 
 def initAST():
     '''Construct the initial AST for every program.
@@ -482,7 +523,7 @@ def initAST():
     boolType = DecafType.boolean()
     strType = DecafType.string()
 
-    body = ()
+    body = (0, 'Block', [])
 
     # Construct the methods for In
     DecafMethod('scan_int', 'public', 'static', intType, body)
