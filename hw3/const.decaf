@@ -1,0 +1,5 @@
+class Const {
+	Const () {}
+	private Const(A a) {}
+	public Const(int b, float c) {}
+}

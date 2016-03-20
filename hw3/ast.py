@@ -69,14 +69,18 @@ class DecafConstructor(object):
     # parsed.
     context = []
 
-    def __init__(self, ident, visibility, parameters, var_table, body):
-        self._id = ident
+    def __init__(self, visibility, body):
+        self._id = self.get_new_id()
         self._visibility = visibility
-        self._parameters = parameters
-        self._var_table = var_table
+        self._var_table = DecafVariable.context
+        self._parameters = []
+        for var in self._var_table:
+            if var.kind == 'formal':
+                self._parameters.append(var)
         self._body = body
 
         self.context.append(self)
+        DecafVariable.flush_context()
 
     @property
     def id(self):
@@ -111,7 +115,22 @@ class DecafConstructor(object):
         cls.context = []
 
     def __str__(self):
-        pass  # TODO
+        # Use a list of strings to build the result string. They will be
+        # .join()'d later. This is more efficient than concatenating them.
+        slist = []
+        slist.append('CONSTRUCTOR: {}, {}'.format(self.id, self.visibility))
+        param_string = ', '.join([str(param.id)
+                                 for param in self.parameters])
+        slist.append('Method parameters: {}'.format(param_string))
+        if len(self.var_table) > 0:
+            # Ensure that there's a newline before the variable table.
+            var_string = '\n' + '\n'.join([str(var)
+                                          for var in self.var_table])
+        else:
+            var_string = ''
+        slist.append('Variable Table: {}'.format(var_string))
+        slist.append('Constructor Body: {}'.format(stmt_to_string(self.body)))
+        return '\n'.join(slist)
 
 
 class DecafField(object):
@@ -190,22 +209,22 @@ class DecafMethod(object):
     # parsed.
     context = []
 
-    def __init__(self, name, visibility, applicability, return_type, var_table,
-                 body):
+    def __init__(self, name, visibility, applicability, return_type, body):
         self._name = name
         self._id = self.get_new_id()
         self._class = None
         self._visibility = visibility
         self._applicability = applicability
         self._return_type = return_type
-        self._var_table = var_table
+        self._var_table = DecafVariable.context
         self._parameters = []
-        for var in var_table:
+        for var in self._var_table:
             if var.kind == 'formal':
                 self._parameters.append(var)
         self._body = body
 
         self.context.append(self)
+        DecafVariable.flush_context()
 
     @property
     def name(self):
@@ -466,28 +485,24 @@ def initAST():
     body = ()
 
     # Construct the methods for In
-    DecafMethod('scan_int', 'public', 'static', intType, [], body)
-    DecafMethod('scan_float', 'public', 'static', floatType, [], body)
+    DecafMethod('scan_int', 'public', 'static', intType, body)
+    DecafMethod('scan_float', 'public', 'static', floatType, body)
 
     # Construct the In class
     DecafClass('In', None)
 
     # Construct the methods for Out
-    intVar = DecafVariable.formal('i', intType)
-    DecafMethod('print', 'public', 'static', voidType, [intVar], body)
-    DecafVariable.flush_context()
+    DecafVariable.formal('i', intType)
+    DecafMethod('print', 'public', 'static', voidType, body)
 
-    floatVar = DecafVariable.formal('f', floatType)
-    DecafMethod('print', 'public', 'static',  voidType, [floatVar], body)
-    DecafVariable.flush_context()
+    DecafVariable.formal('f', floatType)
+    DecafMethod('print', 'public', 'static',  voidType, body)
 
-    boolVar = DecafVariable.formal('b', boolType)
-    DecafMethod('print', 'public', 'static', voidType, [boolVar], body)
-    DecafVariable.flush_context()
+    DecafVariable.formal('b', boolType)
+    DecafMethod('print', 'public', 'static', voidType, body)
 
-    strVar = DecafVariable.formal('s', strType)
-    DecafMethod('print', 'public', 'static', voidType, [strVar], body)
-    DecafVariable.flush_context()
+    DecafVariable.formal('s', strType)
+    DecafMethod('print', 'public', 'static', voidType, body)
 
     # Construct the Out class
     DecafClass('Out', None)

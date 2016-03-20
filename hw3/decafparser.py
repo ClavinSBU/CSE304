@@ -85,19 +85,15 @@ def p_field_decl(p):
 def p_method_decl_void(p):
     'method_decl : mod VOID ID LPAREN param_list_opt RPAREN block'
     ast.DecafMethod(p[3], p[1]['visibility'], p[1]['applicability'],
-                    ast.DecafType.void(), ast.DecafVariable.context, p[7])
-    ast.DecafVariable.flush_context()
-    ast.DecafVariable.reset_ids()
+                    ast.DecafType.void(), p[7])
 def p_method_decl_nonvoid(p):
     'method_decl : mod type ID LPAREN param_list_opt RPAREN block'
     ast.DecafMethod(p[3], p[1]['visibility'], p[1]['applicability'], p[2],
-                    ast.DecafVariable.context, p[7])
-    ast.DecafVariable.flush_context()
-    ast.DecafVariable.reset_ids()
+                    p[7])
 
 def p_constructor_decl(p):
     'constructor_decl : mod ID LPAREN param_list_opt RPAREN block'
-    pass
+    ast.DecafConstructor(p[1]['visibility'], p[6])
 
 
 def p_mod(p):
