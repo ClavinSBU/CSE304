@@ -190,16 +190,19 @@ class DecafMethod(object):
     # parsed.
     context = []
 
-    def __init__(self, name, visibility, applicability,
-                 parameters, return_type, var_table, body):
+    def __init__(self, name, visibility, applicability, return_type, var_table,
+                 body):
         self._name = name
         self._id = self.get_new_id()
         self._class = None
         self._visibility = visibility
         self._applicability = applicability
-        self._parameters = parameters
         self._return_type = return_type
         self._var_table = var_table
+        self._parameters = []
+        for var in var_table:
+            if var.kind == 'formal':
+                self._parameters.append(var)
         self._body = body
 
         self.context.append(self)
@@ -266,16 +269,16 @@ class DecafMethod(object):
         slist.append('METHOD: {}, {}, {}, {}, {}, {}'.format(
             self.id, self.name, self.decaf_class, self.visibility,
             self.applicability, self.return_type))
-        paramString = ', '.join([str(param)
+        param_string = ', '.join([str(param.id)
                                  for param in self.parameters])
-        slist.append('Method parameters: {}'.format(paramString))
+        slist.append('Method parameters: {}'.format(param_string))
         if len(self.var_table) > 0:
             # Ensure that there's a newline before the variable table.
-            varString = '\n' + '\n'.join([str(var)
-                                          for var in self.var_table.values()])
+            var_string = '\n' + '\n'.join([str(var)
+                                          for var in self.var_table])
         else:
-            varString = ''
-        slist.append('Variable Table: {}'.format(varString))
+            var_string = ''
+        slist.append('Variable Table: {}'.format(var_string))
         slist.append('Method Body: {}'.format(stmt_to_string(self.body)))
         return '\n'.join(slist)
 
@@ -287,6 +290,21 @@ class DecafVariable(object):
     variables). It is also used temporarily to construct fields.'''
     __auto_id = 1
 
+    # Stores the variables of the method currently being parsed.
+    context = []
+
+    # Stores the block scope of the variables. When a new block is encountered,
+    # a new list is pushed on the scope. Within that list are references to
+    # each variable declared in that scope. To navigate through the block
+    # scope, iterate through all the blocks in reverse, until you find a block
+    # with the variable you are searching for. A method (in_scope) is provided
+    # that does exactly that.
+    #
+    # The formal parameters are always in the first (0th) block. The local
+    # variables in the top-most block are in the second (1st) block. After
+    # that, blocks are pushed and popped as they begin and end.
+    scope = [[]]
+
     def __init__(self, name):
         '''This should only be used if you need a barebones variable.
 
@@ -296,6 +314,9 @@ class DecafVariable(object):
         self._id = self.get_new_id()
         self._kind = None
         self._type = None
+
+        DecafVariable.context.append(self)
+        DecafVariable.scope[-1].append(self)
 
     @property
     def name(self):
@@ -334,20 +355,47 @@ class DecafVariable(object):
         cls.__auto_id = 1
 
     @classmethod
-    def formal(cls, name, decafType):
+    def flush_context(cls):
+        '''Flush the context table to make way for a new method.
+
+        This will also reset the auto-generated ids and the scope.'''
+        cls.reset_ids()
+        cls.scope = [[]]
+        cls.context = []
+
+    @classmethod
+    def formal(cls, name, decaftype):
         '''Create a formal parameter variable.'''
         var = cls(name)
         var._kind = 'formal'
-        var._type = decafType
+        var._type = decaftype
         return var
 
     @classmethod
-    def local(cls, name, decafType):
+    def local(cls, name):
         '''Create a local variable.'''
         var = cls(name)
         var._kind = 'local'
-        var._type = decafType
         return var
+
+    @classmethod
+    def pop_block(cls):
+        cls.scope.pop()
+
+    @classmethod
+    def push_block(cls):
+        cls.scope.append([])
+
+    @classmethod
+    def get_var_in_scope(cls, var_name):
+        '''Return the most recent declaration of the variable name.
+
+        Returns None if that variable name is not in scope.'''
+        for block in reversed(cls.scope):
+            for var in block:
+                if var_name == var.name:
+                    return var
+        return None
 
     def __str__(self):
         return 'VARIABLE {_id}, {_name}, {_kind}, {_type}'.format(**vars(self))
@@ -418,32 +466,28 @@ def initAST():
     body = ()
 
     # Construct the methods for In
-    DecafMethod('scan_int', 'public', 'static', [], intType, {}, body)
-    DecafMethod('scan_float', 'public', 'static', [], floatType, {}, body)
+    DecafMethod('scan_int', 'public', 'static', intType, [], body)
+    DecafMethod('scan_float', 'public', 'static', floatType, [], body)
 
     # Construct the In class
     DecafClass('In', None)
 
     # Construct the methods for Out
     intVar = DecafVariable.formal('i', intType)
-    DecafMethod('print', 'public', 'static', [intVar], voidType, {'i': intVar},
-                body)
-    DecafVariable.reset_ids()
+    DecafMethod('print', 'public', 'static', voidType, [intVar], body)
+    DecafVariable.flush_context()
 
     floatVar = DecafVariable.formal('f', floatType)
-    DecafMethod('print', 'public', 'static', [floatVar], voidType,
-                {'f': floatVar}, body)
-    DecafVariable.reset_ids()
+    DecafMethod('print', 'public', 'static',  voidType, [floatVar], body)
+    DecafVariable.flush_context()
 
     boolVar = DecafVariable.formal('b', boolType)
-    DecafMethod('print', 'public', 'static', [boolVar], voidType,
-                {'b': boolVar}, body)
-    DecafVariable.reset_ids()
+    DecafMethod('print', 'public', 'static', voidType, [boolVar], body)
+    DecafVariable.flush_context()
 
     strVar = DecafVariable.formal('s', strType)
-    DecafMethod('print', 'public', 'static', [strVar], voidType, {'s': strVar},
-                body)
-    DecafVariable.reset_ids()
+    DecafMethod('print', 'public', 'static', voidType, [strVar], body)
+    DecafVariable.flush_context()
 
     # Construct the Out class
     DecafClass('Out', None)

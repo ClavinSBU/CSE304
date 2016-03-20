@@ -79,14 +79,21 @@ def p_field_decl(p):
     p[0] = p[1]  # Syntheize visibility and applicability
     for var in p[2]['vars']:
         ast.DecafField(var, p[0]['visibility'], p[0]['applicability'])
-    ast.DecafVariable.reset_ids()  # Ensure the ids start at zero for the next body
+    # We weren't inside a method so let's ignore the context table and flush it
+    ast.DecafVariable.flush_context()
 
 def p_method_decl_void(p):
     'method_decl : mod VOID ID LPAREN param_list_opt RPAREN block'
-    pass
+    ast.DecafMethod(p[3], p[1]['visibility'], p[1]['applicability'],
+                    ast.DecafType.void(), ast.DecafVariable.context, p[7])
+    ast.DecafVariable.flush_context()
+    ast.DecafVariable.reset_ids()
 def p_method_decl_nonvoid(p):
     'method_decl : mod type ID LPAREN param_list_opt RPAREN block'
-    pass
+    ast.DecafMethod(p[3], p[1]['visibility'], p[1]['applicability'], p[2],
+                    ast.DecafVariable.context, p[7])
+    ast.DecafVariable.flush_context()
+    ast.DecafVariable.reset_ids()
 
 def p_constructor_decl(p):
     'constructor_decl : mod ID LPAREN param_list_opt RPAREN block'
@@ -119,7 +126,7 @@ def p_var_decl(p):
     p[0] = {'type': p[1], 'vars': p[2]['vars']}
     for var in p[0]['vars']:
         var.type = p[0]['type']
-    ast.DecafVariable.reset_ids()
+
 
 def p_type_int(p):
     'type :  INT'
@@ -144,7 +151,10 @@ def p_var_list_single(p):
 
 def p_var_id(p):
     'var : ID'
-    p[0] = ast.DecafVariable(p[1])
+    # We're unsure at this point if this is a field declaration or a variable
+    # declaration inside a method. Let's assume the latter and just flush the
+    # context table if it was actually a field declaration.
+    p[0] = ast.DecafVariable.local(p[1])
 def p_var_array(p):
     'var : var LBRACKET RBRACKET'
     pass
@@ -165,16 +175,24 @@ def p_param_list_single(p):
 
 def p_param(p):
     'param : type ID'
-    pass
+    p[0] = ast.DecafVariable.formal(p[2], p[1])
 
 # Statements
 
 def p_block(p):
-    'block : LBRACE stmt_list RBRACE'
-    pass
+    'block : LBRACE block_begin stmt_list block_end RBRACE'
+    p[0] = None  # TODO
 def p_block_error(p):
-    'block : LBRACE stmt_list error RBRACE'
+    'block : LBRACE block_begin stmt_list error block_end RBRACE'
     # error within a block; skip to enclosing block
+    p[0] = None  # TODO
+def p_block_begin(p):
+    'block_begin : '
+    ast.DecafVariable.push_block()
+    pass
+def p_block_end(p):
+    'block_end : '
+    ast.DecafVariable.pop_block()
     pass
 
 def p_stmt_list_empty(p):

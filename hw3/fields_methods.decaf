@@ -1,0 +1,21 @@
+class fields_only {
+	private static int one;
+	public float two, three;
+	boolean four, five, six;
+	static IntList seven;
+}
+
+class more_fields extends fields_only {
+	public static float eight;
+	private fields_only nine, ten;
+}
+
+class plus_methods extends fields_only {
+	public static void hello() {}
+
+	fields_only guten_tag(more_fields expression) {}
+
+	private int goodbye(boolean wave) {}
+
+	static boolean farewell(float intensity, int length) {}
+}
