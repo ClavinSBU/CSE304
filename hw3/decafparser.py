@@ -22,6 +22,7 @@ precedence = (
 
 
 def init():
+    ast.initAST()
     decaflexer.errorflag = False
 
 

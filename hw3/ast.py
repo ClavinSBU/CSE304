@@ -26,7 +26,7 @@ class DecafClass(object):
     @property
     def super_class(self):
         if self._super_class is None:
-            return ""
+            return ''
         else:
             return self._super_class
 
@@ -144,7 +144,7 @@ class DecafField(object):
     @property
     def decaf_class(self):
         if self._class is None:
-            return ""
+            return ''
         else:
             return self._class
 
@@ -247,7 +247,7 @@ class DecafMethod(object):
     def flush_context(cls, class_name):
         '''Move all methods from the context list to the table list.
 
-        Also sets the class attributes of those methods'''
+        Also sets the class attributes of those methods.'''
         for method in cls.context:
             method._class = class_name
         cls.table += cls.context
@@ -260,16 +260,38 @@ class DecafMethod(object):
         return ident
 
     def __str__(self):
-        pass  # TODO
+        # Use a list of strings to build the result string. They will be
+        # .join()'d later. This is more efficient than concatenating them.
+        slist = []
+        slist.append('METHOD: {}, {}, {}, {}, {}, {}'.format(
+            self.id, self.name, self.decaf_class, self.visibility,
+            self.applicability, self.return_type))
+        paramString = ', '.join([str(param)
+                                 for param in self.parameters])
+        slist.append('Method parameters: {}'.format(paramString))
+        if len(self.var_table) > 0:
+            # Ensure that there's a newline before the variable table.
+            varString = '\n' + '\n'.join([str(var)
+                                          for var in self.var_table.values()])
+        else:
+            varString = ''
+        slist.append('Variable Table: {}'.format(varString))
+        slist.append('Method Body: {}'.format(stmt_to_string(self.body)))
+        return '\n'.join(slist)
 
 
 class DecafVariable(object):
+    '''Represents a variable in the Decaf language.
+
+    This class is used for all variables (formal parameters and local
+    variables). It is also used temporarily to construct fields.'''
     __auto_id = 1
 
     def __init__(self, name):
-        '''Represents a variable in the Decaf language.
+        '''This should only be used if you need a barebones variable.
 
-        This class is also used in parsing fields.'''
+        Otherwise, refer to the classmethods local and formal for a more
+        complete instantiation method.'''
         self._name = name
         self._id = self.get_new_id()
         self._kind = None
@@ -286,14 +308,14 @@ class DecafVariable(object):
     @property
     def kind(self):
         if self._kind is None:
-            return ""
+            return ''
         else:
             return self._kind
 
     @property
     def type(self):
         if self._type is None:
-            return ""
+            return ''
         else:
             return self._type
 
@@ -309,10 +331,26 @@ class DecafVariable(object):
 
     @classmethod
     def reset_ids(cls):
-        cls.__auto_id = 0
+        cls.__auto_id = 1
+
+    @classmethod
+    def formal(cls, name, decafType):
+        '''Create a formal parameter variable.'''
+        var = cls(name)
+        var._kind = 'formal'
+        var._type = decafType
+        return var
+
+    @classmethod
+    def local(cls, name, decafType):
+        '''Create a local variable.'''
+        var = cls(name)
+        var._kind = 'local'
+        var._type = decafType
+        return var
 
     def __str__(self):
-        pass  # TODO
+        return 'VARIABLE {_id}, {_name}, {_kind}, {_type}'.format(**vars(self))
 
 
 class DecafType(object):
@@ -340,8 +378,72 @@ class DecafType(object):
         return DecafType('string')
 
     @staticmethod
+    def void():
+        return DecafType('void')
+
+    @staticmethod
     def user_defined(class_name):
         return DecafType('user({})'.format(class_name))
 
     def __str__(self):
         return self.type
+
+
+def stmt_to_string(stmt):
+    return ''  # TODO
+
+
+def initAST():
+    '''Construct the initial AST for every program.
+
+    According to the Decaf specification, every program has access to two
+    built-in classes: In and Out.
+
+    In has:
+    - public static int scan_int()
+    - public static float scan_float()
+
+    Out has:
+    - public static void print(int i)
+    - public static void print(float f)
+    - public static void print(boolean b)
+    - public static void print(string s)'''
+    # Construct the type we'll need
+    intType = DecafType.int()
+    floatType = DecafType.float()
+    voidType = DecafType.void()
+    boolType = DecafType.boolean()
+    strType = DecafType.string()
+
+    body = ()
+
+    # Construct the methods for In
+    DecafMethod('scan_int', 'public', 'static', [], intType, {}, body)
+    DecafMethod('scan_float', 'public', 'static', [], floatType, {}, body)
+
+    # Construct the In class
+    DecafClass('In', None)
+
+    # Construct the methods for Out
+    intVar = DecafVariable.formal('i', intType)
+    DecafMethod('print', 'public', 'static', [intVar], voidType, {'i': intVar},
+                body)
+    DecafVariable.reset_ids()
+
+    floatVar = DecafVariable.formal('f', floatType)
+    DecafMethod('print', 'public', 'static', [floatVar], voidType,
+                {'f': floatVar}, body)
+    DecafVariable.reset_ids()
+
+    boolVar = DecafVariable.formal('b', boolType)
+    DecafMethod('print', 'public', 'static', [boolVar], voidType,
+                {'b': boolVar}, body)
+    DecafVariable.reset_ids()
+
+    strVar = DecafVariable.formal('s', strType)
+    DecafMethod('print', 'public', 'static', [strVar], voidType, {'s': strVar},
+                body)
+    DecafVariable.reset_ids()
+
+    # Construct the Out class
+    DecafClass('Out', None)
