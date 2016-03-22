@@ -386,13 +386,32 @@ def p_expr_binop(p):
             | expr AND expr
             | expr OR expr
     '''
-    p[0] = (p.linespan(0), 'Binary', p[2], p[1], p[3])
+
+    if p[2] == '+': operator = 'add'
+    elif p[2] == '-': operator = 'sub'
+    elif p[2] == '*': operator = 'mult'
+    elif p[2] == '/': operator = 'div'
+    elif p[2] == '==': operator = 'equal'
+    elif p[2] == '!=': operator = 'not-equal'
+    elif p[2] == '<': operator = 'less-than'
+    elif p[2] == '<=': operator = 'less-than-or-equal'
+    elif p[2] == '>': operator = 'greater-than'
+    elif p[2] == '>=': operator = 'greater-than-or-equal'
+    elif p[2] == '&&': operator = 'and'
+    else: operator = 'or'
+
+    p[0] = (p.linespan(0), 'Binary', operator, p[1], p[3])
 
 def p_expr_unop(p):
     '''expr : PLUS expr %prec UMINUS
             | MINUS expr %prec UMINUS
             | NOT expr'''
-    p[0] = (p.linespan(0), 'Unary', p[2], p[1])
+
+    if p[1] == '+': operator = 'positive'
+    elif p[1] == '-': operator = 'negative'
+    else: operator = 'not'
+
+    p[0] = (p.linespan(0), 'Unary', p[2], operator)
 
 def p_assign_equals(p):
     'assign : lhs ASSIGN expr'
