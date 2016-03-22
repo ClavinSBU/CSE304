@@ -255,7 +255,7 @@ def p_stmt_block(p):
 
 def p_stmt_var_decl(p):
     'stmt : var_decl'
-    p[0] = p[1]
+    pass
 
 def p_stmt_error(p):
     'stmt : error SEMICOLON'
