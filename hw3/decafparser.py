@@ -221,31 +221,42 @@ def p_stmt_list(p):
 def p_stmt_if(p):
     '''stmt : IF LPAREN expr RPAREN stmt ELSE stmt
           | IF LPAREN expr RPAREN stmt'''
-    pass
+    if (len(p) > 6): # Case with 'if-else'
+        p[0] = (p.linespan(0), 'If', p[3], 'Then', p[5], 'Else', p[7])
+    else: # Case with just 'if'
+        p[0] = (p.linespan(0), 'If', p[3], 'Then', p[5])
+
 def p_stmt_while(p):
     'stmt : WHILE LPAREN expr RPAREN stmt'
-    pass
+    p[0] = (p.linespan(0), 'While', p[3], p[5])
+
 def p_stmt_for(p):
     'stmt : FOR LPAREN stmt_expr_opt SEMICOLON expr_opt SEMICOLON stmt_expr_opt RPAREN stmt'
-    pass
+    p[0] = (p.linespan(0), 'For', p[3], p[5], p[7], p[9])
+
 def p_stmt_return(p):
     'stmt : RETURN expr_opt SEMICOLON'
-    pass
+    p[0] = (p.linespan(0), 'Return', p[2])
+
 def p_stmt_stmt_expr(p):
     'stmt : stmt_expr SEMICOLON'
     p[0] = p[1]
 def p_stmt_break(p):
     'stmt : BREAK SEMICOLON'
-    pass
+    p[0] = 'Break'
+
 def p_stmt_continue(p):
     'stmt : CONTINUE SEMICOLON'
-    pass
+    p[0] = 'Continue'
+
 def p_stmt_block(p):
     'stmt : block'
-    pass
+    p[0] = p[1]
+
 def p_stmt_var_decl(p):
     'stmt : var_decl'
-    pass
+    p[0] = p[1]
+
 def p_stmt_error(p):
     'stmt : error SEMICOLON'
     print("Invalid statement near line {}".format(p.lineno(1)))
@@ -282,16 +293,18 @@ def p_primary_super(p):
     p[0] = (p.linespan(0), 'Super')
 def p_primary_paren(p):
     'primary : LPAREN expr RPAREN'
-    pass
+    p[0] = p[2]
+
 def p_primary_newobj(p):
-    'primary : NEW ID LPAREN args_opt RPAREN'
-    pass
+    'primary : NEW ID LPAREN start_args args_opt get_args_list RPAREN'
+    p[0] = (p.linespan(0), 'New-object', p[2], p[6])
+
 def p_primary_lhs(p):
     'primary : lhs'
     p[0] = p[1]
 def p_primary_method_invocation(p):
     'primary : method_invocation'
-    pass
+    p[0] = p[1]
 
 def p_args_opt_nonempty(p):
     'args_opt : arg_plus'
@@ -302,10 +315,11 @@ def p_args_opt_empty(p):
 
 def p_args_plus(p):
     'arg_plus : arg_plus COMMA expr'
-    pass
+    arg_list.append(p[3])
+
 def p_args_single(p):
     'arg_plus : expr'
-    pass
+    arg_list.append(p[1])
 
 def p_lhs(p):
     '''lhs : field_access
@@ -339,9 +353,19 @@ def p_array_access(p):
     'array_access : primary LBRACKET expr RBRACKET'
     pass
 
+
+arg_list = []
 def p_method_invocation(p):
-    'method_invocation : field_access LPAREN args_opt RPAREN'
-    pass
+    'method_invocation : field_access LPAREN start_args args_opt get_args_list RPAREN'
+    p[0] = (p.linespan(0), 'Method-call', p[1], p[5])
+
+def p_start_method_call(p):
+    'start_args : '
+    del arg_list[:]
+
+def p_get_args_list(p):
+    'get_args_list : '
+    p[0] = arg_list
 
 def p_expr_basic(p):
     '''expr : primary
@@ -362,28 +386,32 @@ def p_expr_binop(p):
             | expr AND expr
             | expr OR expr
     '''
-    pass
+    p[0] = (p.linespan(0), 'Binary', p[2], p[1], p[3])
+
 def p_expr_unop(p):
     '''expr : PLUS expr %prec UMINUS
             | MINUS expr %prec UMINUS
             | NOT expr'''
-    pass
+    p[0] = (p.linespan(0), 'Unary', p[2], p[1])
 
 def p_assign_equals(p):
     'assign : lhs ASSIGN expr'
     p[0] = (p.linespan(0), 'Assign', p[1], p[3])
 def p_assign_post_inc(p):
     'assign : lhs INC'
-    pass
+    p[0] = (p.linespan(0), 'Auto', p[1], 'inc', 'post')
+
 def p_assign_pre_inc(p):
     'assign : INC lhs'
-    pass
+    p[0] = (p.linespan(0), 'Auto', p[1], 'inc', 'pre')
+
 def p_assign_post_dec(p):
     'assign : lhs DEC'
-    pass
+    p[0] = (p.linespan(0), 'Auto', p[1], 'dec', 'post')
+
 def p_assign_pre_dec(p):
     'assign : DEC lhs'
-    pass
+    p[0] = (p.linespan(0), 'Auto', p[1], 'dec', 'pre')
 
 def p_new_array(p):
     'new_array : NEW type dim_expr_plus dim_star'
@@ -414,14 +442,16 @@ def p_stmt_expr(p):
 
 def p_stmt_expr_opt(p):
     'stmt_expr_opt : stmt_expr'
-    pass
+    p[0] = p[1]
+
 def p_stmt_expr_empty(p):
     'stmt_expr_opt : '
     pass
 
 def p_expr_opt(p):
     'expr_opt : expr'
-    pass
+    p[0] = p[1]
+
 def p_expr_empty(p):
     'expr_opt : '
     pass
