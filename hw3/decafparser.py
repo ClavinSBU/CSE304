@@ -414,6 +414,13 @@ def p_array_access(p):
 
 def p_method_invocation(p):
     'method_invocation : field_access LPAREN args_opt RPAREN'
+    if p[1][1] != 'Field-access':
+        # There is no implicit 'this',
+        # so no method call can be a class or variable reference.
+        print('Illegal method call {} at line {}'.format(p[1][2], p.lineno(1)))
+        decaflexer.errorflag = True
+        raise SyntaxError
+    # Otherwise, p[1] is a field-access:
     # p[1] = (linespan, 'Field-access', this/super/class_id, function_name)
     p[0] = (p.linespan(0), 'Method-call', p[1][2], p[1][3], p[3])
 

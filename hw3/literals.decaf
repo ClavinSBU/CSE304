@@ -1,0 +1,11 @@
+class Decaf {
+	Decaf() {
+		int x;
+		x = 1;
+		x = null;
+		x = true;
+		x = false;
+		x = "string";
+		x = 1.0;
+	}
+}
