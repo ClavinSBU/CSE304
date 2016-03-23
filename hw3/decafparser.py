@@ -100,7 +100,7 @@ def p_field_decl(p):
             p.lineno(0))
         decaflexer.errorflag = True
         raise SyntaxError
-    
+
     for var in p[2][1]:  #p[2] = (type, var_list)
         ast.DecafField(var, p[0][0], p[0][1])
 
@@ -311,7 +311,7 @@ def p_stmt_var_decl(p):
             p.lineno(0))
             decaflexer.errorflag = True
             raise SyntaxError
-            
+
 
 def p_stmt_error(p):
     'stmt : error SEMICOLON'
