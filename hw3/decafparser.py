@@ -243,11 +243,11 @@ def p_stmt_stmt_expr(p):
     p[0] = p[1]
 def p_stmt_break(p):
     'stmt : BREAK SEMICOLON'
-    p[0] = 'Break'
+    p[0] = (p.linespan(0), 'Break')
 
 def p_stmt_continue(p):
     'stmt : CONTINUE SEMICOLON'
-    p[0] = 'Continue'
+    p[0] = (p.linespan(0), 'Continue')
 
 def p_stmt_block(p):
     'stmt : block'
