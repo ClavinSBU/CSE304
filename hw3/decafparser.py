@@ -109,23 +109,11 @@ def p_field_decl(p):
 
 def p_method_decl_void(p):
     'method_decl : mod VOID method_name LPAREN param_list_opt RPAREN block'
-    param_set = set([var.name for var in p[5]])
-    if len(param_set) != len(p[5]):
-        print 'Duplicate parameter definition found at line {}'.format(
-            p.lineno(0))
-        decaflexer.errorflag = True
-        raise SyntaxError
     # p[1] = (visibility, applicability)
     ast.DecafMethod(p[3], p[1][0], p[1][1],
                     ast.DecafType.void(), p[7])
 def p_method_decl_nonvoid(p):
     'method_decl : mod type method_name LPAREN param_list_opt RPAREN block'
-    param_set = set([var.name for var in p[5]])
-    if len(param_set) != len(p[5]):
-        print 'Duplicate parameter definition found at line {}'.format(
-            p.lineno(0))
-        decaflexer.errorflag = True
-        raise SyntaxError
     # p[1] = (visibility, applicability)
     ast.DecafMethod(p[3], p[1][0], p[1][1], p[2],
                     p[7])
@@ -136,12 +124,6 @@ def p_method_name(p):
 
 def p_constructor_decl(p):
     'constructor_decl : mod constructor_name LPAREN param_list_opt RPAREN block'
-    param_set = set([var.name for var in p[4]])
-    if len(param_set) != len(p[4]):
-        print 'Duplicate parameter definition found at line {}'.format(
-            p.lineno(0))
-        decaflexer.errorflag = True
-        raise SyntaxError
     # p[1] = (visibility, applicability)
     ast.DecafConstructor(p[1][0], p[6])
 def p_constructor_name(p):
@@ -211,6 +193,12 @@ def p_var_array(p):
 
 def p_param_list_opt(p):
     'param_list_opt : param_list'
+    param_set = set([var.name for var in p[1]])
+    if len(param_set) != len(p[1]):
+        print 'Duplicate parameter definition found at line {}'.format(
+            p.lineno(0))
+        decaflexer.errorflag = True
+        raise SyntaxError
     p[0] = p[1]
 def p_param_list_empty(p):
     'param_list_opt : '
