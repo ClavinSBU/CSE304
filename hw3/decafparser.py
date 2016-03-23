@@ -90,6 +90,12 @@ def p_field_decl(p):
     'field_decl : mod var_decl'
     p[0] = p[1]  # p[1] = (visibility, applicability)
     for var in p[2][1]:  #p[2] = (type, var_list)
+        for field in ast.DecafField.context:
+            if var.name == field.name:
+                print 'Duplicate field definition {} found at line {}'.format(
+                    var.name, p.lineno(0))
+                decaflexer.errorflag = True
+                raise SyntaxError
         ast.DecafField(var, p[0][0], p[0][1])
     # We weren't inside a method so let's ignore the context table and flush it
     ast.DecafVariable.flush_context()
@@ -357,7 +363,7 @@ def p_field_access_id(p):
             return
     # At this point, we have an error
     print('Unknown class or variable {} at line {}'.format(p[1], p.lineno(1)))
-    decaflexer.errorFlag = True
+    decaflexer.errorflag = True
     raise SyntaxError
 
 def p_array_access(p):
