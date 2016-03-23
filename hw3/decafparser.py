@@ -415,7 +415,7 @@ def p_assign_post_inc(p):
 
 def p_assign_pre_inc(p):
     'assign : INC lhs'
-    p[0] = (p.linespan(0), 'Auto', p[1], 'inc', 'pre')
+    p[0] = (p.linespan(0), 'Auto', p[2], 'inc', 'pre')
 
 def p_assign_post_dec(p):
     'assign : lhs DEC'
@@ -423,7 +423,7 @@ def p_assign_post_dec(p):
 
 def p_assign_pre_dec(p):
     'assign : DEC lhs'
-    p[0] = (p.linespan(0), 'Auto', p[1], 'dec', 'pre')
+    p[0] = (p.linespan(0), 'Auto', p[2], 'dec', 'pre')
 
 def p_new_array(p):
     'new_array : NEW type dim_expr_plus dim_star'
