@@ -41,13 +41,19 @@ def p_class_decl_list_empty(p):
 
 def p_class_decl(p):
     'class_decl : class_name extends LBRACE class_body_decl_list RBRACE'
+    for decaf_class in ast.DecafClass.table:
+        if decaf_class.name == p[1]:
+            print 'Duplicate class definition {} found at line {}'.format(
+                p[1], p.lineno(0))
+            decaflexer.errorflag = True
+            raise SyntaxError
     ast.DecafClass(p[1], p[2])
 def p_class_decl_error(p):
     'class_decl : class_name extends LBRACE error RBRACE'
     # error in class declaration; skip to next class decl.
-    ast.DecafConstructor.flushContext(None)
-    ast.DecafField.flushContext(None)
-    ast.DecafMethod.flushContext(None)
+    ast.DecafConstructor.flush_context(None)
+    ast.DecafField.flush_context(None)
+    ast.DecafMethod.flush_context(None)
 def p_class_name(p):
     'class_name : CLASS ID'
     ast.DecafClass.current_class = p[2]
@@ -350,7 +356,8 @@ def p_field_access_id(p):
             p[0] = (p.linespan(0), 'Class', p[1])
             return
     # At this point, we have an error
-    print("Unknown class or variable {} at line {}".format(p[1], p.lineno(1)))
+    print('Unknown class or variable {} at line {}'.format(p[1], p.lineno(1)))
+    decaflexer.errorFlag = True
     raise SyntaxError
 
 def p_array_access(p):

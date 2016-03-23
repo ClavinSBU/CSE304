@@ -1,0 +1,7 @@
+class Decaf {
+	int x;
+}
+/* The following line should cause a syntax error. */
+class Decaf {
+	int y;
+}
