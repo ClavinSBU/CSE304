@@ -82,19 +82,21 @@ def p_class_body_decl_constructor(p):
 
 def p_field_decl(p):
     'field_decl : mod var_decl'
-    p[0] = p[1]  # Syntheize visibility and applicability
-    for var in p[2]['vars']:
-        ast.DecafField(var, p[0]['visibility'], p[0]['applicability'])
+    p[0] = p[1]  # p[1] = (visibility, applicability)
+    for var in p[2][1]:  #p[2] = (type, var_list)
+        ast.DecafField(var, p[0][0], p[0][1])
     # We weren't inside a method so let's ignore the context table and flush it
     ast.DecafVariable.flush_context()
 
 def p_method_decl_void(p):
     'method_decl : mod VOID method_name LPAREN param_list_opt RPAREN block'
-    ast.DecafMethod(p[3], p[1]['visibility'], p[1]['applicability'],
+    # p[1] = (visibility, applicability)
+    ast.DecafMethod(p[3], p[1][0], p[1][1],
                     ast.DecafType.void(), p[7])
 def p_method_decl_nonvoid(p):
     'method_decl : mod type method_name LPAREN param_list_opt RPAREN block'
-    ast.DecafMethod(p[3], p[1]['visibility'], p[1]['applicability'], p[2],
+    # p[1] = (visibility, applicability)
+    ast.DecafMethod(p[3], p[1][0], p[1][1], p[2],
                     p[7])
 def p_method_name(p):
     'method_name : ID'
@@ -103,7 +105,8 @@ def p_method_name(p):
 
 def p_constructor_decl(p):
     'constructor_decl : mod constructor_name LPAREN param_list_opt RPAREN block'
-    ast.DecafConstructor(p[1]['visibility'], p[6])
+    # p[1] = (visibility, applicability)
+    ast.DecafConstructor(p[1][0], p[6])
 def p_constructor_name(p):
     'constructor_name : ID'
     ast.DecafConstructor.current_constructor = p[1]
@@ -112,7 +115,7 @@ def p_constructor_name(p):
 
 def p_mod(p):
     'mod : visibility_mod storage_mod'
-    p[0] = {'visibility': p[1], 'applicability': p[2]}
+    p[0] = (p[1], p[2])
 
 def p_visibility_mod_pub(p):
     'visibility_mod : PUBLIC'
@@ -133,9 +136,9 @@ def p_storage_mod_empty(p):
 
 def p_var_decl(p):
     'var_decl : type var_list SEMICOLON'
-    p[0] = {'type': p[1], 'vars': p[2]['vars']}
-    for var in p[0]['vars']:
-        var.type = p[0]['type']
+    p[0] = (p[1], p[2])
+    for var in p[2]: 
+        var.type = p[1]
 
 
 def p_type_int(p):
@@ -153,11 +156,11 @@ def p_type_id(p):
 
 def p_var_list_plus(p):
     'var_list : var_list COMMA var'
-    p[0] = {'vars': p[1]['vars']}
-    p[0]['vars'].append(p[3])
+    p[0] = p[1]
+    p[0].append(p[3])
 def p_var_list_single(p):
     'var_list : var'
-    p[0] = {'vars': [p[1]]}
+    p[0] = [p[1]]
 
 def p_var_id(p):
     'var : ID'
