@@ -296,8 +296,8 @@ def p_primary_paren(p):
     p[0] = p[2]
 
 def p_primary_newobj(p):
-    'primary : NEW ID LPAREN start_args args_opt get_args_list RPAREN'
-    p[0] = (p.linespan(0), 'New-object', p[2], p[6])
+    'primary : NEW ID LPAREN args_opt RPAREN'
+    p[0] = (p.linespan(0), 'New-object', p[2], p[4])
 
 def p_primary_lhs(p):
     'primary : lhs'
@@ -308,18 +308,19 @@ def p_primary_method_invocation(p):
 
 def p_args_opt_nonempty(p):
     'args_opt : arg_plus'
-    pass
+    p[0] = p[1]
 def p_args_opt_empty(p):
     'args_opt : '
-    pass
+    p[0] = []
 
 def p_args_plus(p):
     'arg_plus : arg_plus COMMA expr'
-    arg_list.append(p[3])
+    p[0] = p[1]
+    p[0].append(p[3])
 
 def p_args_single(p):
     'arg_plus : expr'
-    arg_list.append(p[1])
+    p[0] = [p[1]]
 
 def p_lhs(p):
     '''lhs : field_access
@@ -354,18 +355,10 @@ def p_array_access(p):
     pass
 
 
-arg_list = []
 def p_method_invocation(p):
-    'method_invocation : field_access LPAREN start_args args_opt get_args_list RPAREN'
-    p[0] = (p.linespan(0), 'Method-call', p[1], p[5])
-
-def p_start_method_call(p):
-    'start_args : '
-    del arg_list[:]
-
-def p_get_args_list(p):
-    'get_args_list : '
-    p[0] = arg_list
+    'method_invocation : field_access LPAREN args_opt RPAREN'
+    # p[1] = (linespan, 'Field-access', this/super/class_id, function_name)
+    p[0] = (p.linespan(0), 'Method-call', p[1][2], p[1][3], p[3])
 
 def p_expr_basic(p):
     '''expr : primary
@@ -469,7 +462,7 @@ def p_stmt_expr_empty(p):
 
 def p_expr_opt(p):
     'expr_opt : expr'
-    p[0] = (p.linespan(0), 'Expr', p[1])
+    p[0] = p[1]
 
 def p_expr_empty(p):
     'expr_opt : '

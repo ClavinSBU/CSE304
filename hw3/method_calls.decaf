@@ -1,0 +1,9 @@
+class MethodCalls {
+	MethodCalls(float x) {
+		int y;
+		int z;
+		x = this.f(x,y);
+		y = this.g(x,y,z);
+		return this.h();
+	}
+}

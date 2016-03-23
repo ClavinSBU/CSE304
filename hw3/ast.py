@@ -485,10 +485,11 @@ def stmt_to_string(stmt):
         if type(i) is tuple:
             sub_list.append(stmt_to_string(i))
         elif type(i) is list:
-            list_string = "\n,  ".join([stmt_to_string(el) for el in i])
             if stmt[1] == 'Block':
+                list_string = "\n,  ".join([stmt_to_string(el) for el in i])
                 sub_list.append('[\n{}\n]'.format(list_string))
             else:
+                list_string = ", ".join([stmt_to_string(el) for el in i])
                 sub_list.append('[{}]'.format(list_string))
         else:
             sub_list.append(str(i))
