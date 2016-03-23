@@ -469,7 +469,7 @@ def p_stmt_expr_empty(p):
 
 def p_expr_opt(p):
     'expr_opt : expr'
-    p[0] = p[1]
+    p[0] = (p.linespan(0), 'Expr', p[1])
 
 def p_expr_empty(p):
     'expr_opt : '
