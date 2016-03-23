@@ -41,12 +41,12 @@ def p_class_decl_list_empty(p):
 
 def p_class_decl(p):
     'class_decl : class_name extends LBRACE class_body_decl_list RBRACE'
-    for decaf_class in ast.DecafClass.table:
-        if decaf_class.name == p[1]:
-            print 'Duplicate class definition {} found at line {}'.format(
-                p[1], p.lineno(0))
-            decaflexer.errorflag = True
-            raise SyntaxError
+    decaf_class_list = [decaf_cls.name for decaf_cls in ast.DecafClass.table]
+    if p[1] in decaf_class_list:
+        print 'Duplicate class definition {} found at line {}'.format(
+            p[1], p.lineno(0))
+        decaflexer.errorflag = True
+        raise SyntaxError
     ast.DecafClass(p[1], p[2])
 def p_class_decl_error(p):
     'class_decl : class_name extends LBRACE error RBRACE'
@@ -89,24 +89,43 @@ def p_class_body_decl_constructor(p):
 def p_field_decl(p):
     'field_decl : mod var_decl'
     p[0] = p[1]  # p[1] = (visibility, applicability)
+
+    field_set = set([var.name for var in p[2][1]])
+    context_set = set([var.name for var in ast.DecafField.context])
+    if len(field_set) != len(p[2][1]) or \
+       len(field_set & context_set) > 0:
+        # The first condition checks that there are n unique fields
+        # The second confition checks that they were not already defined.
+        print 'Duplicate field definition found at line {}'.format(
+            p.lineno(0))
+        decaflexer.errorflag = True
+        raise SyntaxError
+    
     for var in p[2][1]:  #p[2] = (type, var_list)
-        for field in ast.DecafField.context:
-            if var.name == field.name:
-                print 'Duplicate field definition {} found at line {}'.format(
-                    var.name, p.lineno(0))
-                decaflexer.errorflag = True
-                raise SyntaxError
         ast.DecafField(var, p[0][0], p[0][1])
+
     # We weren't inside a method so let's ignore the context table and flush it
     ast.DecafVariable.flush_context()
 
 def p_method_decl_void(p):
     'method_decl : mod VOID method_name LPAREN param_list_opt RPAREN block'
+    param_set = set([var.name for var in p[5]])
+    if len(param_set) != len(p[5]):
+        print 'Duplicate parameter definition found at line {}'.format(
+            p.lineno(0))
+        decaflexer.errorflag = True
+        raise SyntaxError
     # p[1] = (visibility, applicability)
     ast.DecafMethod(p[3], p[1][0], p[1][1],
                     ast.DecafType.void(), p[7])
 def p_method_decl_nonvoid(p):
     'method_decl : mod type method_name LPAREN param_list_opt RPAREN block'
+    param_set = set([var.name for var in p[5]])
+    if len(param_set) != len(p[5]):
+        print 'Duplicate parameter definition found at line {}'.format(
+            p.lineno(0))
+        decaflexer.errorflag = True
+        raise SyntaxError
     # p[1] = (visibility, applicability)
     ast.DecafMethod(p[3], p[1][0], p[1][1], p[2],
                     p[7])
@@ -117,6 +136,12 @@ def p_method_name(p):
 
 def p_constructor_decl(p):
     'constructor_decl : mod constructor_name LPAREN param_list_opt RPAREN block'
+    param_set = set([var.name for var in p[4]])
+    if len(param_set) != len(p[4]):
+        print 'Duplicate parameter definition found at line {}'.format(
+            p.lineno(0))
+        decaflexer.errorflag = True
+        raise SyntaxError
     # p[1] = (visibility, applicability)
     ast.DecafConstructor(p[1][0], p[6])
 def p_constructor_name(p):
@@ -186,17 +211,18 @@ def p_var_array(p):
 
 def p_param_list_opt(p):
     'param_list_opt : param_list'
-    pass
+    p[0] = p[1]
 def p_param_list_empty(p):
     'param_list_opt : '
-    pass
+    p[0] = []
 
 def p_param_list(p):
     'param_list : param_list COMMA param'
-    pass
+    p[0] = p[1]
+    p[0].append(p[3])
 def p_param_list_single(p):
     'param_list : param'
-    pass
+    p[0] = [p[1]]
 
 def p_param(p):
     'param : type ID'
@@ -270,7 +296,22 @@ def p_stmt_block(p):
 
 def p_stmt_var_decl(p):
     'stmt : var_decl'
-    pass
+    block_set = set([var.name for var in ast.DecafVariable.scope[-1]])
+    if len(block_set) != len(ast.DecafVariable.scope[-1]):
+        print 'Duplicate variable definition found at line {}'.format(
+            p.lineno(0))
+        decaflexer.errorflag = True
+        raise SyntaxError
+    if len(ast.DecafVariable.scope) == 2:  # We're in topmost block.
+        # Check that the formals don't conflict with these variables.
+        formals_set = set([var.name for var in ast.DecafVariable.scope[0]])
+        if len(block_set & formals_set) > 0:
+            # A variable is only in the intersection if it's redefined
+            print 'Duplicate variable definition found at line {}'.format(
+            p.lineno(0))
+            decaflexer.errorflag = True
+            raise SyntaxError
+            
 
 def p_stmt_error(p):
     'stmt : error SEMICOLON'
