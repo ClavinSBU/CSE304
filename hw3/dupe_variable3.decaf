@@ -1,5 +1,0 @@
-class Decaf{
-	Decaf(int x, float x) {
-		return;
-	}
-}
