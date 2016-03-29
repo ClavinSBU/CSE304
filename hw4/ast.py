@@ -102,19 +102,31 @@ class Class:
     def lookup_field(self, fname):
         return lookup(self.fields, fname)
 
+    def subclass_of(self, other):
+        if type(self) is not type(other):
+            return False
+        super_class = self
+        while super_class is not None:
+            if super_class.name == other.name:
+                return True
+            super_class = self.superclass
+        return False
             
 class Type:
     """A class encoding Types in Decaf"""
-    def __init__(self, basetype, params=None):
+    def __init__(self, basetype, params=None, class_literal=False):
         if ((params == None) or (params == 0)):
-            if (basetype in ['int', 'boolean', 'float', 'string', 'void']):
+            if (basetype in ['int', 'boolean', 'float', 'string', 'void', 'error', 'null']):
                 self.kind = 'basic'
                 self.typename = basetype
             elif isinstance(basetype, Type):
                 self.kind = basetype.kind
                 self.typename = basetype.typename
             else:
-                self.kind = 'class'
+                if class_literal:
+                    self.kind = 'class-literal'
+                else:
+                    self.kind = 'class'
                 self.typename = basetype
         else:
             bt = Type(basetype, params-1)
@@ -126,10 +138,44 @@ class Type:
             return 'array(%s)'%(self.basetype.__str__())
         elif (self.kind == 'class'):
             return 'user(%s)'%(self.typename)
+        elif (self.kind == 'class-literal'):
+            return 'class-literal(%s)'%(self.typename)
         else:
             return self.typename
 
-    def __repr(self):
+    def subtype_of(self, other):
+        if self == other:
+            # T ~ T. Reflexive
+            return True
+        if self.kind == 'basic' and other.kind == 'basic':
+            # Allow widening of ints to float (int ~ float)
+            # This is the only non-reflexive relation between literals.
+            return self.typename == 'int' and other.typename == 'float'
+        if ((self.kind == 'class' and other.kind == 'class') or
+            (self.kind == 'class-literal' and other.kind == 'class-literal')):
+            # ClassA ~ ClassB if ClassA is a subclass of ClassB
+            # This is true for user(_)'s and class-literal(_)'s
+            class_a = lookup(classtable, self.typename)
+            class_b = lookup(classtable, other.typename)
+            return class_a.subtype_of(class_b)
+        if self.kind == 'array' and other.kind == 'array':
+            # array(T1) ~ array(T2) if T1 ~ T2
+            return self.basetype.subtype_of(other.basetype)
+        if self.kind == 'basic' and self.typename == 'null':
+            # null ~ user(A) and null ~ array(T)
+            return other.kind == 'class' or other.kind == 'array'
+
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+        if self.kind != other.kind:
+            return False
+        if self.kind == 'array':
+            return self.basetype == other.basetype
+        else:
+            return self.typename == other.typename
+
+    def __repr__(self):
         return self.__str__()
 
 class Field:
