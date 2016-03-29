@@ -121,8 +121,114 @@ def expr_error(expr):
 
     Also ensures that the type of the expression is calculated. Call this
     first if you need to use the type of an expression.'''
-    expr.type = ast.Type('null')  # TODO: actually calculate the type
-    return False
+    expr.type = None
+
+    if isinstance(expr, ast.ConstantExpr):
+        if expr.kind == 'int' or expr.kind == 'float' or expr.kind == 'string':
+            expr.type = ast.Type(expr.kind)
+        elif expr.kind == 'Null':
+            expr.type = ast.Type('null')
+        elif expr.kind == 'True' or expr.kind == 'False':
+            expr.type = ast.Type('boolean')
+        else:
+            expr.type = ast.Type('error')
+            signal_error('Unknown type {}'.format(expr.type), expr.lines)
+
+    elif isinstance(expr, ast.VarExpr):
+        expr.type = expr.var.type
+
+    elif isinstance(expr, ast.UnaryExpr):
+        arg = expr.arg
+        arg_err = expr_error(arg)
+        if arg_err:
+            expr.type = ast.Type('error')
+        elif expr.uop == 'uminus':
+            if (arg.type != ast.Type('int') and
+                arg.type != ast.Type('float')):
+                signal_error('Expecting an integer or float argument to unary '
+                             'minus. Found {}'.format(arg.type), expr.lines)
+                expr.type = ast.Type('error')
+            else:
+                expr.type = arg.type
+        elif expr.uop == 'neg':
+            if arg.type != ast.Type('boolean'):
+                signal_error('Expecting a boolean argument to ! (negation). '
+                             'Found {}'.format(arg.type), expr.lines)
+                expr.type = ast.Type('error')
+            else:
+                expr.type = arg.type
+
+    elif isinstance(expr, ast.BinaryExpr):
+        op_names = {'add': '+', 'sub': '-', 'mul': '*', 'div': '/',
+                           'and': '&&', 'or': '||', 'eq': '==', 'neq': '!=',
+                           'lt': '<', 'leq': '<=', 'gt': '>', 'geq': '>='}
+        bop = expr.bop
+        arg1 = expr.arg1
+        arg2 = expr.arg2
+        arg1_err = expr_error(arg1)
+        arg2_err = expr_error(arg2)
+        if arg1_err or arg2_err:
+            expr.type = ast.Type('error')
+        elif bop == 'add' or bop == 'sub' or bop == 'mul' or bop == 'div':
+            type1 = arg1.type
+            type2 = arg2.type
+            if type1 == ast.Type('int') and type2 == ast.Type('int'):
+                expr.type = ast.Type('int')
+            elif ((type1 == ast.Type('int') and type2 == ast.Type('float')) or
+                  (type1 == ast.Type('float') and type2 == ast.Type('int')) or
+                  (type1 == ast.Type('float') and type2 == ast.Type('float'))):
+                expr.type = ast.Type('float')
+            else:
+                signal_error('Expecting float or integer arguments for the '
+                             'operator "{}". Found {} on the left and {} on '
+                             'the right.'.format(op_names[bop], type1, type2),
+                             expr.lines)
+                expr.type = ast.Type('error')
+        elif bop == 'and' or bop == 'or':
+            # TODO: Check the specification. I believe there is an error in it.
+            # The homework says the "Boolean operations and, or: have type int
+            # if both operands have type boolean..." This should be type
+            # boolean, if I understand it correctly.
+            type1 = arg1.type
+            type2 = arg2.type
+            if type1 == ast.Type('boolean') and type2 == ast.Type('boolean'):
+                expr.type = ast.Type('boolean')
+            else:
+                signal_error('Expecting boolean arguments for the operator '
+                             '"{}". Found {} on the left and {} on the '
+                             'right.'.format(op_names[bop], type1, type2),
+                             expr.lines)
+        elif bop == 'lt' or bop == 'leq' or bop == 'gt' or bop == 'geq':
+            type1 = arg1.type
+            type2 = arg2.type
+            if ((type1 != ast.Type('int') or type1 != ast.Type('float')) and
+                (type2 != ast.Type('int') or type2 != ast.Type('float'))):
+                expr.type = ast.Type('boolean')
+            else:
+                signal_error('Expecting boolean arguments for the operator '
+                             '"{}". Found {} on the left and {} on the '
+                             'right.'.format(op_names[bop], type1, type2),
+                             expr.lines)
+                expr.type = ast.Type('error')
+        elif bop == 'eq' or bop == 'neq':
+            type1 = arg1.type
+            type2 = arg2.type
+            if type1.subtype_of(type2) or type2.subtype_of(type1):
+                expr.type = ast.Type('boolean')
+            else:
+                signal_error('Expecting compatible arguments for the operator '
+                             '"{}". One argument must be the subtype of the '
+                             'other. Found {} on the left and {} on the '
+                             'right.'.format(op_names[bop], type1, type2),
+                             expr.lines)
+                expr.type = ast.Type('error')
+
+    else:
+        # Placeholder for not-implemented expressions
+        # TODO: Remove this case when done
+        expr.type = ast.Type('null')
+
+    return expr.type.is_error()
 
 
 def signal_error(string, lineno):
