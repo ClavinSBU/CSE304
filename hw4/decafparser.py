@@ -205,7 +205,7 @@ def p_type_id(p):
     baseclass = ast.lookup(ast.classtable, p[1])
     if (baseclass == None):
         signal_error('Class {0} does not exist!'.format(p[1]), p.lineno(1))
-    current_type = ast.Type(baseclass)
+    current_type = ast.Type(baseclass.name)
 
 def p_var_list_plus(p):
     'var_list : var_list COMMA var'

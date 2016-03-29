@@ -110,6 +110,9 @@ class Type:
             if (basetype in ['int', 'boolean', 'float', 'string', 'void']):
                 self.kind = 'basic'
                 self.typename = basetype
+            elif isinstance(basetype, Type):
+                self.kind = basetype.kind
+                self.typename = basetype.typename
             else:
                 self.kind = 'class'
                 self.typename = basetype
