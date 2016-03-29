@@ -168,6 +168,11 @@ class Type:
     def is_error(self):
         return self.kind == 'basic' and self.typename == 'error'
 
+    def is_numeric(self):
+        '''Return True if this is a basic int or float.'''
+        return self.kind == 'basic' and (self.typename == 'int' or
+                                         self.typename == 'float')
+
     def __eq__(self, other):
         if type(self) is not type(other):
             return NotImplemented

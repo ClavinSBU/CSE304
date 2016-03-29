@@ -143,20 +143,19 @@ def expr_error(expr):
         if arg_err:
             expr.type = ast.Type('error')
         elif expr.uop == 'uminus':
-            if (arg.type != ast.Type('int') and
-                arg.type != ast.Type('float')):
+            if arg.type.is_numeric():
+                expr.type = arg.type
+            else:
                 signal_error('Expecting an integer or float argument to unary '
                              'minus. Found {}'.format(arg.type), expr.lines)
                 expr.type = ast.Type('error')
-            else:
-                expr.type = arg.type
         elif expr.uop == 'neg':
-            if arg.type != ast.Type('boolean'):
+            if arg.type == ast.Type('boolean'):
+                expr.type = arg.type
+            else:
                 signal_error('Expecting a boolean argument to ! (negation). '
                              'Found {}'.format(arg.type), expr.lines)
                 expr.type = ast.Type('error')
-            else:
-                expr.type = arg.type
 
     elif isinstance(expr, ast.BinaryExpr):
         op_names = {'add': '+', 'sub': '-', 'mul': '*', 'div': '/',
@@ -172,12 +171,11 @@ def expr_error(expr):
         elif bop == 'add' or bop == 'sub' or bop == 'mul' or bop == 'div':
             type1 = arg1.type
             type2 = arg2.type
-            if type1 == ast.Type('int') and type2 == ast.Type('int'):
-                expr.type = ast.Type('int')
-            elif ((type1 == ast.Type('int') and type2 == ast.Type('float')) or
-                  (type1 == ast.Type('float') and type2 == ast.Type('int')) or
-                  (type1 == ast.Type('float') and type2 == ast.Type('float'))):
-                expr.type = ast.Type('float')
+            if type1.is_numeric() and type2.is_numeric():
+                if type1 == ast.Type('float') or type2 == ast.Type('float'):
+                    expr.type = ast.Type('float')
+                else:
+                    expr.type = ast.Type('int')
             else:
                 signal_error('Expecting float or integer arguments for the '
                              'operator "{}". Found {} on the left and {} on '
@@ -201,13 +199,12 @@ def expr_error(expr):
         elif bop == 'lt' or bop == 'leq' or bop == 'gt' or bop == 'geq':
             type1 = arg1.type
             type2 = arg2.type
-            if ((type1 != ast.Type('int') or type1 != ast.Type('float')) and
-                (type2 != ast.Type('int') or type2 != ast.Type('float'))):
+            if type1.is_numeric() and type2.is_numeric():
                 expr.type = ast.Type('boolean')
             else:
-                signal_error('Expecting boolean arguments for the operator '
-                             '"{}". Found {} on the left and {} on the '
-                             'right.'.format(op_names[bop], type1, type2),
+                signal_error('Expecting int or float arguments for the'
+                             'operator "{}". Found {} on the left and {} on '
+                             'the right.'.format(op_names[bop], type1, type2),
                              expr.lines)
                 expr.type = ast.Type('error')
         elif bop == 'eq' or bop == 'neq':
