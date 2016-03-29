@@ -178,6 +178,9 @@ class Type:
         else:
             return self.typename == other.typename
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __repr__(self):
         return self.__str__()
 
