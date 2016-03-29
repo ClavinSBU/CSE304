@@ -35,31 +35,46 @@ def stmt_error(stmt):
         stmt.error = block_error
 
     elif isinstance(stmt, ast.IfStmt):
-        # Calculate the type of the condition
-        expr_error(stmt.condition)
-        if stmt.condition.type != ast.Type('boolean'):
-            signal_error('Was expecting a boolean condition. Got a condition'
+        cond_err = expr_error(stmt.condition)
+        then_err = stmt_error(stmt.thenpart)
+        else_err = stmt_error(stmt.elsepart)
+        bool_type = ast.Type('boolean')
+        if cond_err:
+            stmt.error = True
+        elif not stmt.condition.type == bool_type:
+            signal_error('Expecting a boolean condition. Got a condition'
                          ' of {0} instead.'.format(stmt.condition.type),
                          stmt.lines)
             stmt.error = True
-        if stmt_error(stmt.thenpart) or stmt_error(stmt.elsepart):
+        elif then_err or else_err:
             stmt.error = True
 
     elif isinstance(stmt, ast.WhileStmt):
-        if stmt.condition.type != ast.Type('boolean'):
-            signal_error('Was expecting a boolean condition. Got a condition'
-                         ' of {0} instead.'.format(stmt.condition.type),
+        cond_err = expr_error(stmt.cond)
+        body_err = stmt_error(stmt.body)
+        if cond_error:
+            stmt.error = True
+        elif stmt.condition.type != ast.Type('boolean'):
+            signal_error('Expecting a boolean condition. Got a condition'
+                         ' of {0} instead.'.format(stmt.cond.type),
                          stmt.lines)
             stmt.error = True
-        if stmt_error(stmt.body):
+        elif body_err:
             stmt.error = True
 
     elif isinstance(stmt, ast.ForStmt):
-        if stmt.condition.type != ast.Type('boolean'):
-            signal_error('Was expecting a boolean condition.', stmt.lines)
+        init_err = stmt_error(stmt.init)
+        cond_err = expr_error(stmt.cond)
+        update_err = stmt_error(stmt.update)
+        body_err = stmt_error(stmt.body)
+        if cond_error:
             stmt.error = True
-        if (stmt_error(stmt.init) or expr_error(stmt.cond) or
-            stmt_error(stmt.update) or stmt_error(stmt.body)):
+        elif stmt.cond.type != ast.Type('boolean'):
+            signal_error('Expecting a boolean condition. Got a condition'
+                         ' of {0} instead.'.format(stmt.cond.type),
+                         stmt.lines)
+            stmt.error = True
+        elif init_err or update_err or body_err:
             stmt.error = True
 
     elif isinstance(stmt, ast.ReturnStmt):
@@ -74,9 +89,8 @@ def stmt_error(stmt):
                     stmt.lines)
                 stmt.error = True
         else:
-            # Must call expr_error before we can check stmt.expr.type
-            # because type is not calculated until expr_error is called.
-            if expr_error(stmt.expr):
+            expr_err = expr_error(stmt.expr)
+            if expr_err:
                 stmt.error = True
             elif not stmt.expr.type.subtype_of(rtype):
                 signal_error(
