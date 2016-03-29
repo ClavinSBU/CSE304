@@ -8,6 +8,7 @@ import getopt
 
 import decafparser
 import ast
+import typecheck
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -38,9 +39,12 @@ def main(argv=None):
         infile = filename + ".decaf"
         ast.initialize_ast()
         if decafparser.from_file(infile):
-            ast.print_ast()            
-        else:
-            print "Failure: there were errors."
+            typecheck.check_classes(ast.classtable)
+            if not typecheck.error_flag:
+                # AST OK. Print and exit
+                ast.print_ast()
+                return 0
+        print "Failure: there were errors."
     except Usage, err:
         print >>sys.stderr, err.msg
         print >>sys.stderr, "For help use --help"
