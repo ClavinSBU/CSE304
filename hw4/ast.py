@@ -165,6 +165,9 @@ class Type:
             # null ~ user(A) and null ~ array(T)
             return other.kind == 'class' or other.kind == 'array'
 
+    def is_error(self):
+        return self.kind == 'basic' and self.typename == 'error'
+
     def __eq__(self, other):
         if type(self) is not type(other):
             return NotImplemented
