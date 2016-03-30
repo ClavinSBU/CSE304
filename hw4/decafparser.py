@@ -317,15 +317,15 @@ def p_stmt_block(p):
     p[0] = p[1]
 def p_stmt_var_decl(p):
     'stmt : var_decl'
-    p[0] = None
+    p[0] = ast.SkipStmt(None)
 def p_stmt_empty(p):
     'stmt : SEMICOLON'
-    p[0] = None
+    p[0] = ast.SkipStmt(p.lineno(1))
 def p_stmt_error(p):
     'stmt : error SEMICOLON'
     signal_error("Invalid statement", p.lineno(2))
     decaflexer.errorflag = True
-    p[0] = None
+    p[0] = ast.SkipStmt(p.lineno(2)
 
 # Expressions
 def p_literal_int_const(p):
@@ -478,7 +478,7 @@ def p_assign_pre_dec(p):
 def p_new_array(p):
     'new_array : NEW type dim_expr_plus dim_star'
     t = ast.Type(p[2], params=p[4])
-    p[0] = ast.NewArray(t, p[3])
+    p[0] = ast.NewArrayExpr(t, p[3], p.lineno(1))
 
 def p_dim_expr_plus(p):
     'dim_expr_plus : dim_expr_plus dim_expr'
