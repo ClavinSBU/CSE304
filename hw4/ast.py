@@ -404,7 +404,7 @@ class ReturnStmt(Stmt):
 class BlockStmt(Stmt):
     def __init__(self, stmtlist, lines):
         self.lines = lines
-        self.stmtlist = [s for s in stmtlist if (s != None) and (not isinstance(s, SkipStmt)]
+        self.stmtlist = [s for s in stmtlist if (s != None) and (not isinstance(s, SkipStmt))]
 
     def printout(self):
         print "Block(["

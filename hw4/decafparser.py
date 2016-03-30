@@ -325,7 +325,7 @@ def p_stmt_error(p):
     'stmt : error SEMICOLON'
     signal_error("Invalid statement", p.lineno(2))
     decaflexer.errorflag = True
-    p[0] = ast.SkipStmt(p.lineno(2)
+    p[0] = ast.SkipStmt(p.lineno(2))
 
 # Expressions
 def p_literal_int_const(p):
