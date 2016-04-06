@@ -251,6 +251,28 @@ def expr_error(expr):
 
         expr.type = ast.Type(method.rtype)
 
+    elif isinstance(expr, ast.AssignExpr):
+
+        lhs_err = expr_error(expr.lhs)
+        rhs_err = expr_error(expr.rhs)
+
+        if lhs_err or rhs_err:
+            print 'Not type checked'
+            expr.type = ast.Type('error')
+
+        lhs = ast.Type(expr.lhs.type)
+        rhs = ast.Type(expr.rhs.type)
+
+        if not rhs.subtype_of(lhs):
+            print 'Not a subtype'
+            expr.type = ast.Type('error')
+            signal_error('', expr.lines)
+        else:
+            expr.type = ast.Type(rhs)
+
+    elif isinstance(expr, ast.NewObjectExpr):
+        expr.type = ast.Type(expr.classref.name)
+
     else:
         # Placeholder for not-implemented expressions
         # TODO: Remove this case when done
