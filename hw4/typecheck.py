@@ -222,14 +222,21 @@ def expr_error(expr):
 
     elif isinstance(expr, ast.FieldAccessExpr):
 
+        print expr
+
         err = expr_error(expr.base)
         if err:
-            print 'error' + str(expr.lines)
-            expr.type = ast.Type('null')
+            expr.type = ast.Type('error')
+            signal_error('Could not resolve base {}'.format(expr.base), expr.lines)
+            return True
 
         cls = ast.lookup(ast.classtable, expr.base.type.typename)
 
         field = ast.lookup(cls.fields, expr.fname)
+        if field is None:
+            signal_error('Could not resolve field {}'.format(expr.fname), expr.lines)
+            expr.type = ast.Type('error')
+            return True
 
         expr.type = ast.Type(field.type)
 
@@ -255,6 +262,8 @@ def expr_error(expr):
 
         if method == None:
             expr.type = ast.Type('error')
+            signal_error('Could not resolve method \'{}\''.format(expr.mname), expr.lines)
+            return True
 
         expr.type = ast.Type(method.rtype)
 
@@ -277,9 +286,8 @@ def expr_error(expr):
         rhs = ast.Type(expr.rhs.type)
 
         if not rhs.subtype_of(lhs):
-            print 'Not a subtype'
             expr.type = ast.Type('error')
-            signal_error('', expr.lines)
+            signal_error('{} not a subtype of {}'.format(rhs, lhs), expr.lines)
         else:
             expr.type = ast.Type(rhs)
 
