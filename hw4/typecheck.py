@@ -236,6 +236,21 @@ def expr_error(expr):
     elif isinstance(expr, ast.ThisExpr):
         expr.type = ast.Type(current_class.name)
 
+    elif isinstance(expr, ast.MethodInvocationExpr):
+
+        err = expr_error(expr.base)
+
+        cls = ast.lookup(ast.classtable, expr.base.type.typename)
+
+        method = None
+
+        for i in cls.methods:
+            if expr.mname == i.name:
+                method = i
+                break
+
+        expr.type = ast.Type(method.rtype)
+
     else:
         # Placeholder for not-implemented expressions
         # TODO: Remove this case when done
