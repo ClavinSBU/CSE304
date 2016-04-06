@@ -273,6 +273,9 @@ def expr_error(expr):
     elif isinstance(expr, ast.NewObjectExpr):
         expr.type = ast.Type(expr.classref.name)
 
+    elif isinstance(expr, ast.ClassReferenceExpr):
+        expr.type = ast.Type(expr.classref.name, None, True)
+
     else:
         # Placeholder for not-implemented expressions
         # TODO: Remove this case when done
