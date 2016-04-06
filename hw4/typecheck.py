@@ -220,9 +220,27 @@ def expr_error(expr):
                              expr.lines)
                 expr.type = ast.Type('error')
 
+    elif isinstance(expr, ast.FieldAccessExpr):
+
+        err = expr_error(expr.base)
+        if err:
+            print 'error' + str(expr.lines)
+            expr.type = ast.Type('null')
+
+        cls = ast.lookup(ast.classtable, expr.base.type.typename)
+
+        field = ast.lookup(cls.fields, expr.fname)
+
+        expr.type = ast.Type(field.type)
+
+    elif isinstance(expr, ast.ThisExpr):
+        expr.type = ast.Type(current_class.name)
+
     else:
         # Placeholder for not-implemented expressions
         # TODO: Remove this case when done
+        print 'IMPLEMENT'
+        print type(expr)
         expr.type = ast.Type('null')
 
     return expr.type.is_error()
