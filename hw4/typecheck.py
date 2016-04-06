@@ -239,6 +239,10 @@ def expr_error(expr):
     elif isinstance(expr, ast.MethodInvocationExpr):
 
         err = expr_error(expr.base)
+        if err:
+            signal_error('Could not resolve \'class\' {}'.format(expr.base), expr.lines)
+            expr.type = ast.Type('error')
+            return True
 
         cls = ast.lookup(ast.classtable, expr.base.type.typename)
 
@@ -249,6 +253,9 @@ def expr_error(expr):
                 method = i
                 break
 
+        if method == None:
+            expr.type = ast.Type('error')
+
         expr.type = ast.Type(method.rtype)
 
     elif isinstance(expr, ast.AssignExpr):
@@ -256,9 +263,15 @@ def expr_error(expr):
         lhs_err = expr_error(expr.lhs)
         rhs_err = expr_error(expr.rhs)
 
-        if lhs_err or rhs_err:
-            print 'Not type checked'
+        if lhs_err:
             expr.type = ast.Type('error')
+            signal_error('Could not type check {}'.format(expr.lhs), expr.lines)
+            return True
+
+        if rhs_err:
+            expr.type = ast.Type('error')
+            signal_error('Could not type check {}'.format(expr.rhs), expr.lines)
+            return True
 
         lhs = ast.Type(expr.lhs.type)
         rhs = ast.Type(expr.rhs.type)
@@ -275,6 +288,13 @@ def expr_error(expr):
 
     elif isinstance(expr, ast.ClassReferenceExpr):
         expr.type = ast.Type(expr.classref.name, None, True)
+
+    elif isinstance(expr, ast.SuperExpr):
+        if current_class.superclass == None:
+            signal_error('Class {} has no superclass.'.format(current_class.name), expr.lines)
+            expr.type = ast.Type('error')
+        else:
+            expr.type = ast.Type(current_class.superclass.name)
 
     else:
         # Placeholder for not-implemented expressions
