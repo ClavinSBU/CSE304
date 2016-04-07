@@ -225,7 +225,6 @@ def expr_error(expr):
         err = expr_error(expr.base)
         if err:
             expr.type = ast.Type('error')
-            signal_error('Could not resolve base {}'.format(expr.base), expr.lines)
             return True
 
         cls = ast.lookup(ast.classtable, expr.base.type.typename)
@@ -262,7 +261,6 @@ def expr_error(expr):
 
         err = expr_error(expr.base)
         if err:
-            signal_error('Could not resolve \'class\' {}'.format(expr.base), expr.lines)
             expr.type = ast.Type('error')
             return True
 
@@ -325,14 +323,8 @@ def expr_error(expr):
         lhs_err = expr_error(expr.lhs)
         rhs_err = expr_error(expr.rhs)
 
-        if lhs_err:
+        if lhs_err or rhs_err:
             expr.type = ast.Type('error')
-            signal_error('Could not type check {}'.format(expr.lhs), expr.lines)
-            return True
-
-        if rhs_err:
-            expr.type = ast.Type('error')
-            signal_error('Could not type check {}'.format(expr.rhs), expr.lines)
             return True
 
         lhs = ast.Type(expr.lhs.type)
@@ -400,7 +392,6 @@ def expr_error(expr):
         err = expr_error(expr.arg)
         if err:
             expr.type = ast.Type('error')
-            signal_error('Could not resolve {}'.format(expr.arg), expr.lines)
             return True
 
         if expr.arg.type.is_numeric():
