@@ -403,7 +403,7 @@ def expr_error(expr):
             signal_error('Could not resolve {}'.format(expr.arg), expr.lines)
             return True
 
-        if (str(expr.arg.type) == 'int') or (str(expr.arg.type) == 'float'):
+        if expr.arg.type.is_numeric():
             expr.type = ast.Type(expr.arg.type)
         else:
             expr.type = ast.Type('error')
