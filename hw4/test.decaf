@@ -14,7 +14,7 @@ class IntList{
   public IntList insert(int v) {
     IntList new_element;
 
-    new_element = this.create_list(v);
+    new_element = IntList.create_list(v);
     new_element.next = this;
 
     return new_element;

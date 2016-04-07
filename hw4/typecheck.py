@@ -183,10 +183,6 @@ def expr_error(expr):
                              expr.lines)
                 expr.type = ast.Type('error')
         elif bop == 'and' or bop == 'or':
-            # TODO: Check the specification. I believe there is an error in it.
-            # The homework says the "Boolean operations and, or: have type int
-            # if both operands have type boolean..." This should be type
-            # boolean, if I understand it correctly.
             type1 = arg1.type
             type2 = arg2.type
             if type1 == ast.Type('boolean') and type2 == ast.Type('boolean'):
@@ -225,13 +221,12 @@ def expr_error(expr):
         err = expr_error(expr.base)
         if err:
             expr.type = ast.Type('error')
-            signal_error('Could not resolve base {}'.format(expr.base), expr.lines)
             return True
 
         cls = ast.lookup(ast.classtable, expr.base.type.typename)
 
         cur_cls = cls
-        while cur_cls != None:
+        while cur_cls is not None:
             field = ast.lookup(cur_cls.fields, expr.fname)
             if field is not None:
 
@@ -247,7 +242,6 @@ def expr_error(expr):
             field = None
             cur_cls = cur_cls.superclass
 
-
         if field is None:
             signal_error('Could not resolve field {}'.format(expr.fname), expr.lines)
             expr.type = ast.Type('error')
@@ -262,22 +256,19 @@ def expr_error(expr):
 
         err = expr_error(expr.base)
         if err:
-            signal_error('Could not resolve \'class\' {}'.format(expr.base), expr.lines)
             expr.type = ast.Type('error')
             return True
 
         cls = ast.lookup(ast.classtable, expr.base.type.typename)
-
         method = None
-
         cur_cls = cls
 
-        while cur_cls != None:
+        while cur_cls is not None:
             for i in cur_cls.methods:
                 if expr.mname == i.name:
                     method = i
                     break
-            #TODO: check if method is accessable, params match up.
+
             if method is not None:
                 if (expr.base.type.kind == 'class') and (method.storage != 'static') \
                         and ((method.visibility != 'private') or (expr.base.type.typename == current_class.name)):
@@ -289,7 +280,7 @@ def expr_error(expr):
             method = None
             cur_cls = cur_cls.superclass
 
-        if method == None:
+        if method is None:
             expr.type = ast.Type('error')
             signal_error('Could not resolve method \'{}\''.format(expr.mname), expr.lines)
             return True
@@ -305,7 +296,10 @@ def expr_error(expr):
 
         for i in range(0, len(method_params)):
 
-            expr_error(expr.args[i])
+            arg_err = expr_error(expr.args[i])
+            if arg_err:
+                expr.type = ast.Type('error')
+                return True
 
             nth_param = ast.Type(method_params[i].type)
             nth_arg = ast.Type(expr.args[i].type)
@@ -313,9 +307,9 @@ def expr_error(expr):
             if not nth_arg.subtype_of(nth_param):
                 expr.type = ast.Type('error')
                 signal_error(
-                    'Method argument number {} is not a subtype '
-                    'of construtor parameter number {}. Expects \'{}\', received \'{}\'.'.format(
-                        i + 1, i + 1, nth_param.typename, nth_arg.typename), expr.lines)
+                    'Method argument number {0} is not a subtype '
+                    'of construtor parameter number {0}. Expects \'{1}\', received \'{2}\'.'.format(
+                        i + 1, nth_param.typename, nth_arg.typename), expr.lines)
                 return True
 
         expr.type = ast.Type(method.rtype)
@@ -325,14 +319,8 @@ def expr_error(expr):
         lhs_err = expr_error(expr.lhs)
         rhs_err = expr_error(expr.rhs)
 
-        if lhs_err:
+        if lhs_err or rhs_err:
             expr.type = ast.Type('error')
-            signal_error('Could not type check {}'.format(expr.lhs), expr.lines)
-            return True
-
-        if rhs_err:
-            expr.type = ast.Type('error')
-            signal_error('Could not type check {}'.format(expr.rhs), expr.lines)
             return True
 
         lhs = ast.Type(expr.lhs.type)
@@ -370,7 +358,10 @@ def expr_error(expr):
         # Ensure each arg is a subtype of each param
         for i in range(0, len(constr_params)):
 
-            expr_error(expr.args[i])
+            arg_err = expr_error(expr.args[i])
+            if arg_err:
+                expr.type = ast.Type('error')
+                return True
 
             nth_param = ast.Type(constr_params[i].type)
             nth_arg = ast.Type(expr.args[i].type)
@@ -378,9 +369,9 @@ def expr_error(expr):
             if not nth_arg.subtype_of(nth_param):
                 expr.type = ast.Type('error')
                 signal_error(
-                    'Constructor argument number {} is not a subtype '
-                    'of construtor parameter number {}. Expects \'{}\', received \'{}\'.'.format(
-                        i + 1, i + 1, nth_param.typename, nth_arg.typename), expr.lines)
+                    'Constructor argument number {0} is not a subtype '
+                    'of construtor parameter number {0}. Expects \'{1}\', received \'{}\'.'.format(
+                        i + 1, nth_param.typename, nth_arg.typename), expr.lines)
                 return True
 
         expr.type = ast.Type(expr.classref.name)
@@ -389,7 +380,7 @@ def expr_error(expr):
         expr.type = ast.Type(expr.classref.name, None, True)
 
     elif isinstance(expr, ast.SuperExpr):
-        if current_class.superclass == None:
+        if current_class.superclass is None:
             signal_error('Class {} has no superclass.'.format(current_class.name), expr.lines)
             expr.type = ast.Type('error')
         else:
@@ -400,21 +391,13 @@ def expr_error(expr):
         err = expr_error(expr.arg)
         if err:
             expr.type = ast.Type('error')
-            signal_error('Could not resolve {}'.format(expr.arg), expr.lines)
             return True
 
-        if (str(expr.arg.type) == 'int') or (str(expr.arg.type) == 'float'):
+        if expr.arg.type.is_numeric():
             expr.type = ast.Type(expr.arg.type)
         else:
             expr.type = ast.Type('error')
             signal_error('Auto expression must be int or float; received {}'.format(expr.arg.type), expr.lines)
-
-    else:
-        # Placeholder for not-implemented expressions
-        # TODO: Remove this case when done
-        print 'IMPLEMENT'
-        print type(expr)
-        expr.type = ast.Type('null')
 
     return expr.type.is_error()
 
