@@ -234,8 +234,17 @@ def expr_error(expr):
         while cur_cls != None:
             field = ast.lookup(cur_cls.fields, expr.fname)
             if field is not None:
-                break
-            # TODO: check if field is accessable
+
+                # Ensure it's not static, and not accessed by Class.foo, and it's accessable
+                if (expr.base.type.kind == 'class') and (field.storage != 'static') \
+                        and ((field.visibility != 'private') or (expr.base.type.typename == current_class.name)):
+                    break
+
+                # Ensure it's static, and accessed by Class.foo, and it's accessable
+                if (expr.base.type.kind == 'class-literal') and (field.storage == 'static') \
+                        and ((field.visibility != 'private') or (expr.base.type.typename == current_class.name)):
+                    break
+            field = None
             cur_cls = cur_cls.superclass
 
 
