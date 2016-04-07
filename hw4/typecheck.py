@@ -294,6 +294,30 @@ def expr_error(expr):
             signal_error('Could not resolve method \'{}\''.format(expr.mname), expr.lines)
             return True
 
+        method_params = method.vars.vars[0].values()
+
+        # Ensure number of params match
+        if len(method_params) != len(expr.args):
+            expr.type = ast.Type('error')
+            signal_error('Method \'{}\' expects {} args, received {}'.format(
+                method.name, len(method_params), len(expr.args)), expr.lines)
+            return True
+
+        for i in range(0, len(method_params)):
+
+            expr_error(expr.args[i])
+
+            nth_param = ast.Type(method_params[i].type)
+            nth_arg = ast.Type(expr.args[i].type)
+
+            if not nth_arg.subtype_of(nth_param):
+                expr.type = ast.Type('error')
+                signal_error(
+                    'Method argument number {} is not a subtype '
+                    'of construtor parameter number {}. Expects \'{}\', received \'{}\'.'.format(
+                        i + 1, i + 1, nth_param.typename, nth_arg.typename), expr.lines)
+                return True
+
         expr.type = ast.Type(method.rtype)
 
     elif isinstance(expr, ast.AssignExpr):
