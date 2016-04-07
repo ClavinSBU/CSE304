@@ -321,6 +321,44 @@ def expr_error(expr):
             expr.type = ast.Type(rhs)
 
     elif isinstance(expr, ast.NewObjectExpr):
+
+        cls = ast.lookup(ast.classtable, expr.classref.name)
+
+        # After ensuring the # of args match, if there's no constructor, allow it
+        if len(cls.constructors) == 0 and len(expr.args) == 0:
+            expr.type = ast.Type(expr.classref.name)
+            return False
+
+        if cls.constructors[0].visibility == 'private':
+            expr.type = ast.Type('error')
+            signal_error('Constructor for class {} is private'.format(
+                cls.name), expr.lines)
+            return True
+
+        # Ensure number of args match
+        if len(cls.constructors[0].vars.vars[0]) != len(expr.args):
+            expr.type = ast.Type('error')
+            signal_error('Constructor for class {} expects {} arguments, received {}'.format(
+                cls.name, len(cls.constructors[0].vars.vars[0]), len(expr.args)), expr.lines)
+            return True
+
+        constr_params = cls.constructors[0].vars.vars[0].values()
+        # Ensure each arg is a subtype of each param
+        for i in range(0, len(constr_params)):
+
+            expr_error(expr.args[i])
+
+            nth_param = ast.Type(constr_params[i].type)
+            nth_arg = ast.Type(expr.args[i].type)
+
+            if not nth_arg.subtype_of(nth_param):
+                expr.type = ast.Type('error')
+                signal_error(
+                    'Constructor argument number {} is not a subtype '
+                    'of construtor parameter number {}. Expects \'{}\', received \'{}\'.'.format(
+                        i + 1, i + 1, nth_param.typename, nth_arg.typename), expr.lines)
+                return True
+
         expr.type = ast.Type(expr.classref.name)
 
     elif isinstance(expr, ast.ClassReferenceExpr):
