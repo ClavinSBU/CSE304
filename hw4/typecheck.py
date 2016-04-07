@@ -279,7 +279,14 @@ def expr_error(expr):
                     break
             #TODO: check if method is accessable, params match up.
             if method is not None:
-                break
+                if (expr.base.type.kind == 'class') and (method.storage != 'static') \
+                        and ((method.visibility != 'private') or (expr.base.type.typename == current_class.name)):
+                    break
+
+                if (expr.base.type.kind == 'class-literal') and (method.storage == 'static') \
+                        and ((method.visibility != 'private') or (expr.base.type.typename == current_class.name)):
+                    break
+            method = None
             cur_cls = cur_cls.superclass
 
         if method == None:
