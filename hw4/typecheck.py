@@ -222,8 +222,6 @@ def expr_error(expr):
 
     elif isinstance(expr, ast.FieldAccessExpr):
 
-        print expr
-
         err = expr_error(expr.base)
         if err:
             expr.type = ast.Type('error')
@@ -232,7 +230,15 @@ def expr_error(expr):
 
         cls = ast.lookup(ast.classtable, expr.base.type.typename)
 
-        field = ast.lookup(cls.fields, expr.fname)
+        cur_cls = cls
+        while cur_cls != None:
+            field = ast.lookup(cur_cls.fields, expr.fname)
+            if field is not None:
+                break
+            # TODO: check if field is accessable
+            cur_cls = cur_cls.superclass
+
+
         if field is None:
             signal_error('Could not resolve field {}'.format(expr.fname), expr.lines)
             expr.type = ast.Type('error')
@@ -255,10 +261,17 @@ def expr_error(expr):
 
         method = None
 
-        for i in cls.methods:
-            if expr.mname == i.name:
-                method = i
+        cur_cls = cls
+
+        while cur_cls != None:
+            for i in cur_cls.methods:
+                if expr.mname == i.name:
+                    method = i
+                    break
+            #TODO: check if method is accessable, params match up.
+            if method is not None:
                 break
+            cur_cls = cur_cls.superclass
 
         if method == None:
             expr.type = ast.Type('error')
