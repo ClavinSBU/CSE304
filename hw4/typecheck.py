@@ -317,6 +317,20 @@ def expr_error(expr):
         else:
             expr.type = ast.Type(current_class.superclass.name)
 
+    elif isinstance(expr, ast.AutoExpr):
+
+        err = expr_error(expr.arg)
+        if err:
+            expr.type = ast.Type('error')
+            signal_error('Could not resolve {}'.format(expr.arg), expr.lines)
+            return True
+
+        if (str(expr.arg.type) == 'int') or (str(expr.arg.type) == 'float'):
+            expr.type = ast.Type(expr.arg.type)
+        else:
+            expr.type = ast.Type('error')
+            signal_error('Auto expression must be int or float; received {}'.format(expr.arg.type), expr.lines)
+
     else:
         # Placeholder for not-implemented expressions
         # TODO: Remove this case when done
