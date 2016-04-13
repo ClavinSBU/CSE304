@@ -52,7 +52,7 @@ def stmt_error(stmt):
     elif isinstance(stmt, ast.WhileStmt):
         cond_err = expr_error(stmt.cond)
         body_err = stmt_error(stmt.body)
-        if cond_error:
+        if cond_err:
             stmt.error = True
         elif stmt.condition.type != ast.Type('boolean'):
             signal_error('Expecting a boolean condition. Got a condition'
@@ -67,7 +67,7 @@ def stmt_error(stmt):
         cond_err = expr_error(stmt.cond)
         update_err = stmt_error(stmt.update)
         body_err = stmt_error(stmt.body)
-        if cond_error:
+        if cond_err:
             stmt.error = True
         elif stmt.cond.type != ast.Type('boolean'):
             signal_error('Expecting a boolean condition. Got a condition'
