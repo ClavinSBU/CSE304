@@ -284,7 +284,13 @@ class VarTable:
         c = self.levels[0]   # current block number
         reg = None
         if vkind == 'local':
-            reg = codegen.Register('t', var_reg)
+            if str(vtype) == 'int':
+                reg = codegen.Register('t', var_reg)
+            elif str(vtype) == 'float':
+                reg = codegen.Register('f', var_reg)
+            else:
+                reg = None
+                print 'what type is this?'
             var_reg += 1
         v = Variable(vname, self.lastvar, vkind, vtype, reg)
         vbl = self.vars[c]  # list of variables in current block
