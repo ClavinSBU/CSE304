@@ -1,6 +1,7 @@
 import ast
 
 instr_list = []
+current_loop_cond_label = None
 current_break_out_label = None
 
 def free_reg():
@@ -158,14 +159,15 @@ def gen_code(stmt):
         # test if the cond evaluated to false with 'bz', if so, break out of loop
         # else, fall through into the body of the for-loop
         # when body is over, generate code to update the var (i++)
-        # jump unconditionally back to the current_label, where we eval if i is still < 10
+        # jump unconditionally back to the cond_label, where we eval if i is still < 10
         gen_code(stmt.init)
 
-        current_label = Label(stmt.lines)
-        out_label = Label(current_label.name, True)
+        cond_label = Label(stmt.lines)
+        current_loop_cond_label = cond_label
+        out_label = Label(cond_label.name, True)
         current_break_out_label = out_label
 
-        current_label.add_to_instr()
+        cond_label.add_to_instr()
 
         gen_code(stmt.cond)
         BranchInstr('bz', out_label, stmt.cond.end_reg)
@@ -173,7 +175,7 @@ def gen_code(stmt):
         gen_code(stmt.body)
         gen_code(stmt.update)
 
-        BranchInstr('jmp', current_label)
+        BranchInstr('jmp', cond_label)
 
         out_label.add_to_instr()
 
@@ -207,9 +209,10 @@ def gen_code(stmt):
 
     elif isinstance(stmt, ast.WhileStmt):
 
-        current_label = Label(stmt.lines)
-        current_label.add_to_instr()
-        out_label = Label(current_label.name, True)
+        cond_label = Label(stmt.lines)
+        current_loop_cond_label = cond_label
+        cond_label.add_to_instr()
+        out_label = Label(cond_label.name, True)
 
         current_break_out_label = out_label
 
@@ -219,13 +222,17 @@ def gen_code(stmt):
 
         gen_code(stmt.body)
 
-        BranchInstr('jmp', current_label)
+        BranchInstr('jmp', cond_label)
 
         out_label.add_to_instr()
 
     elif isinstance(stmt, ast.BreakStmt):
         global current_break_out_label
         BranchInstr('jmp', current_break_out_label)
+
+    elif isinstance(stmt, ast.ContinueStmt):
+        global current_loop_cond_label
+        BranchInstr('jmp', current_loop_cond_label)
 
     elif isinstance(stmt, ast.IfStmt):
 
