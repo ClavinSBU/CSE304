@@ -9,6 +9,7 @@ import getopt
 import decafparser
 import ast
 import typecheck
+import codegen
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -43,6 +44,9 @@ def main(argv=None):
             if not typecheck.error_flag:
                 # AST OK. Print and exit
                 ast.print_ast()
+                codegen.generate_code(ast.classtable)
+                for i in codegen.instr_list:
+                    print i
                 return 0
         print "Failure: there were errors."
     except Usage, err:

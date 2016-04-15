@@ -1,0 +1,29 @@
+class HWFive{
+  int value;
+
+  public HWFive(int k) {
+  }
+
+  public int k() {
+
+    int x;
+    int y;
+    int z;
+    int i;
+    float q;
+
+    //z = x + y + 15;
+
+    //x = 5 + 4 / 2 + 10;
+    //x = 40 + z / y + 10 + 15;
+
+    //x = ++y;
+
+    //for (i = 0; i < 10; i++) {
+    //    y++;
+    //}
+    x = 4;
+    //q = 4.5;
+    return x;
+  }
+}

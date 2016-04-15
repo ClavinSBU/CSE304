@@ -1,3 +1,6 @@
+
+import codegen
+
 classtable = {}  # initially empty dictionary of classes.
 lastmethod = 0
 lastconstructor = 0
@@ -22,6 +25,7 @@ def print_ast():
 
 def initialize_ast():
     # define In class:
+    """
     cin = Class("In", None)
     cin.builtin = True     # this is a builtin class
     cout = Class("Out", None)
@@ -57,6 +61,7 @@ def initialize_ast():
 
     addtotable(classtable, "In", cin)
     addtotable(classtable, "Out", cout)
+    """
 
 
 class Class:
@@ -255,7 +260,7 @@ class Constructor:
         print "Constructor Body:"
         self.body.printout()
         
-
+var_reg = 0
 class VarTable:
     """ Table of variables in each method/constructor"""
     def __init__(self):
@@ -274,11 +279,17 @@ class VarTable:
         # where should we check if we can indeed leave the block?
 
     def add_var(self, vname, vkind, vtype):
+        global var_reg
         self.lastvar += 1
         c = self.levels[0]   # current block number
-        v = Variable(vname, self.lastvar, vkind, vtype)
+        reg = None
+        if vkind == 'local':
+            reg = codegen.Register('t', var_reg)
+            var_reg += 1
+        v = Variable(vname, self.lastvar, vkind, vtype, reg)
         vbl = self.vars[c]  # list of variables in current block
         vbl[vname] = v
+        print 'var ' + str(vname) + ' given ' + str(var_reg - 1)
     
     def _find_in_block(self, vname, b):
         if (b in self.vars):
@@ -314,11 +325,12 @@ class VarTable:
 
 class Variable:
     """ Record for a single variable"""
-    def __init__(self, vname, id, vkind, vtype):
+    def __init__(self, vname, id, vkind, vtype, reg):
         self.name = vname
         self.id = id
         self.kind = vkind
         self.type = vtype
+        self.reg = reg
 
     def printout(self):
         print "VARIABLE {0}, {1}, {2}, {3}".format(self.id, self.name, self.kind, self.type)
