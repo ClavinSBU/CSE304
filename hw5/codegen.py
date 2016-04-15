@@ -9,6 +9,20 @@ def free_reg():
     ast.var_reg += 1
     return ret
 
+class Convert:
+    def __init__(self, op, reg, to_int):
+        self.op = op
+        self.src = reg
+        if to_int:
+            self.dst = Register()
+        else:
+            self.dst = Register('f')
+
+        instr_list.append(self)
+
+    def __str__(self):
+        return "{} {}, {}".format(self.op, self.dst, self.src)
+
 class Register:
     def __init__(self, reg_type = 't', reg_num = None):
         self.reg_type = reg_type
@@ -115,6 +129,9 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.AssignExpr):
         gen_code(stmt.rhs)
         gen_code(stmt.lhs)
+        if (str(stmt.lhs.type) == 'float') and (str(stmt.rhs.type) == 'int'):
+            conv = Convert('itof', stmt.rhs.end_reg, False)
+            stmt.rhs.end_reg = conv.dst
         MoveInstr('move', stmt.lhs.end_reg, stmt.rhs.end_reg)
 
     elif isinstance(stmt, ast.VarExpr):
