@@ -19,15 +19,18 @@ class Register:
         return "{}{}".format(self.reg_type, self.reg_num)
 
 class BranchInstr:
-    def __init__(self, opcode, label, value = None):
+    def __init__(self, opcode, label, reg = None):
         self.op = opcode
-        self.value = value
+        self.reg = reg
         self.jmp_label = label
 
         instr_list.append(self)
 
     def __str__(self):
-        return "{} {}".format(self.op, self.jmp_label)
+        if self.reg is None:
+            return "{} {}".format(self.op, self.jmp_label)
+        else:
+            return "{} {} {}{}".format(self.op, self.jmp_label, self.reg.reg_type, self.reg.reg_num)
 
 class Method:
     def __init__(self, name, id):
