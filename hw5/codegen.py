@@ -227,6 +227,36 @@ def gen_code(stmt):
         global current_break_out_label
         BranchInstr('jmp', current_break_out_label)
 
+    elif isinstance(stmt, ast.IfStmt):
+
+        # if (x == y)
+        #   ++x;
+        # else
+        #   --x;
+
+        # generate 2 labels, for the else part, and the out part
+        # test if x == y
+        # if not true, jump to the else part
+        # if true, we're falling through to the then part, then must jump
+        # out right before hitting the else part straight to the out part
+
+        then_label = Label(str(stmt.lines) + '_ELSE_STMT')
+        then_out_label = Label(then_label.name, True)
+
+        gen_code(stmt.condition)
+
+        BranchInstr('bnz', then_label, stmt.condition.end_reg)
+
+        gen_code(stmt.thenpart)
+
+        BranchInstr('jmp', then_out_label)
+
+        then_label.add_to_instr()
+
+        gen_code(stmt.elsepart)
+
+        then_out_label.add_to_instr()
+
     elif stmt.is_method:
         Method(stmt.name, stmt.id)
 
