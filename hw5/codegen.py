@@ -1,6 +1,7 @@
 import ast
 
 instr_list = []
+current_break_out_label = None
 
 def free_reg():
     ret = ast.var_reg
@@ -162,6 +163,8 @@ def gen_code(stmt):
 
         current_label = Label(stmt.lines)
         out_label = Label(current_label.name, True)
+        current_break_out_label = out_label
+
         current_label.add_to_instr()
 
         gen_code(stmt.cond)
@@ -208,6 +211,8 @@ def gen_code(stmt):
         current_label.add_to_instr()
         out_label = Label(current_label.name, True)
 
+        current_break_out_label = out_label
+
         gen_code(stmt.cond)
 
         BranchInstr('bz', out_label, stmt.cond.end_reg)
@@ -217,6 +222,10 @@ def gen_code(stmt):
         BranchInstr('jmp', current_label)
 
         out_label.add_to_instr()
+
+    elif isinstance(stmt, ast.BreakStmt):
+        global current_break_out_label
+        BranchInstr('jmp', current_break_out_label)
 
     elif stmt.is_method:
         Method(stmt.name, stmt.id)
