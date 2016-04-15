@@ -54,7 +54,7 @@ def stmt_error(stmt):
         body_err = stmt_error(stmt.body)
         if cond_err:
             stmt.error = True
-        elif stmt.condition.type != ast.Type('boolean'):
+        elif stmt.cond.type != ast.Type('boolean'):
             signal_error('Expecting a boolean condition. Got a condition'
                          ' of {0} instead.'.format(stmt.cond.type),
                          stmt.lines)

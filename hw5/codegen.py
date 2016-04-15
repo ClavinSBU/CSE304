@@ -43,9 +43,13 @@ class Method:
         return "M_{}_{}:".format(self.name, self.id)
 
 class Label:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, name, out = False):
+        if out:
+            self.name = str(name) + '_OUT'
+        else:
+            self.name = name
 
+    def add_to_instr(self):
         instr_list.append(self)
 
     def __str__(self):
@@ -157,7 +161,8 @@ def gen_code(stmt):
         gen_code(stmt.init)
 
         current_label = Label(stmt.lines)
-        out_label = 'L' + str(current_label.name) + '_OUT'
+        out_label = Label(current_label.name, True)
+        current_label.add_to_instr()
 
         gen_code(stmt.cond)
         BranchInstr('bz', out_label, stmt.cond.end_reg)
@@ -167,7 +172,7 @@ def gen_code(stmt):
 
         BranchInstr('jmp', current_label)
 
-        out_label = Label(str(current_label.name) + '_OUT')
+        out_label.add_to_instr()
 
     elif isinstance(stmt, ast.AutoExpr):
 
@@ -196,6 +201,22 @@ def gen_code(stmt):
 
     elif isinstance(stmt, ast.ReturnStmt):
         pass
+
+    elif isinstance(stmt, ast.WhileStmt):
+
+        current_label = Label(stmt.lines)
+        current_label.add_to_instr()
+        out_label = Label(current_label.name, True)
+
+        gen_code(stmt.cond)
+
+        BranchInstr('bz', out_label, stmt.cond.end_reg)
+
+        gen_code(stmt.body)
+
+        BranchInstr('jmp', current_label)
+
+        out_label.add_to_instr()
 
     elif stmt.is_method:
         Method(stmt.name, stmt.id)
