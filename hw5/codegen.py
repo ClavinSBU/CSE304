@@ -1,8 +1,28 @@
 import ast
 
 instr_list = []
-current_loop_cond_label = None
-current_break_out_label = None
+
+# global vars that hold label objects for different expressions / statements
+current_loop_cond_label = None # this holds the label to the cond of a loop
+current_enter_then_label = None # holds the entrance of a loop, or the then part of if-stmt
+current_break_out_else_label = None # holds the loop's out, or else part of an if-stmt
+# if we're in an if stmt where:
+#
+# if (x < y && x == z) {
+#   x++;
+# } else {
+#   x--;
+# }
+# then if x < y BinaryExpr evals to false, we know to jump to the else branch
+# and use the label called 'current_break_out_else_label'
+# similarly, if we're in a loop where:
+#
+# while (x < y || x < z) {
+#   x++;
+# }
+#
+# if x < y evals to true, jump into the body of the loop
+# which is the label held by current_enter_then_label
 
 def free_reg():
     ret = ast.var_reg
@@ -127,9 +147,9 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.AssignExpr):
         gen_code(stmt.rhs)
         gen_code(stmt.lhs)
-        if (str(stmt.lhs.type) == 'float') and (str(stmt.rhs.type) == 'int'):
-            conv = Convert('itof', stmt.rhs.end_reg, False)
-            stmt.rhs.end_reg = conv.dst
+        #if (str(stmt.lhs.type) == 'float') and (str(stmt.rhs.type) == 'int'):
+        #    conv = Convert('itof', stmt.rhs.end_reg, False)
+        #    stmt.rhs.end_reg = conv.dst
         MoveInstr('move', stmt.lhs.end_reg, stmt.rhs.end_reg)
 
     elif isinstance(stmt, ast.VarExpr):
@@ -151,14 +171,17 @@ def gen_code(stmt):
 
     elif isinstance(stmt, ast.BinaryExpr):
 
+        global current_break_out_else_label, current_enter_then_label
+
         gen_code(stmt.arg1)
         gen_code(stmt.arg2)
 
         if stmt.arg1.end_reg and stmt.arg2.end_reg:
             #reg = free_reg()
             reg = Register()
-            ArithInstr('sub' if (stmt.bop == 'eq') or (stmt.bop == 'neq') else stmt.bop, reg,
-                    stmt.arg1.end_reg, stmt.arg2.end_reg)
+            if (stmt.bop != 'and') and (stmt.bop != 'or'):
+                ArithInstr('sub' if (stmt.bop == 'eq') or (stmt.bop == 'neq') else stmt.bop, reg,
+                        stmt.arg1.end_reg, stmt.arg2.end_reg)
 
             if (stmt.bop == 'eq'):
 
@@ -180,6 +203,16 @@ def gen_code(stmt):
 
                 ieq_out.add_to_instr()
 
+            if (stmt.bop == 'and'):
+                MoveInstr('move_immed_i', reg, 1, True)
+                BranchInstr('bz', current_break_out_else_label, stmt.arg1.end_reg)
+                BranchInstr('bz', current_break_out_else_label, stmt.arg2.end_reg)
+
+            if (stmt.bop == 'or'):
+                MoveInstr('move_immed_i', reg, 0, True)
+                BranchInstr('bnz', current_enter_then_label, stmt.arg1.end_reg)
+                BranchInstr('bnz', current_enter_then_label, stmt.arg2.end_reg)
+
             stmt.end_reg = reg
 
     elif isinstance(stmt, ast.ForStmt):
@@ -199,16 +232,16 @@ def gen_code(stmt):
         # jump unconditionally back to the cond_label, where we eval if i is still < 10
         gen_code(stmt.init)
 
-        cond_label = Label(stmt.lines, 'FOR_COND')
-        current_loop_cond_label = cond_label
-        out_label = Label(stmt.lines, 'FOR_OUT')
-        current_break_out_label = out_label
+        current_loop_cond_label = cond_label = Label(stmt.lines, 'FOR_COND')
+        current_enter_then_label = entry_label = Label(stmt.lines, 'FOR_ENTRY')
+        current_break_out_else_label = out_label = Label(stmt.lines, 'FOR_OUT')
 
         cond_label.add_to_instr()
 
         gen_code(stmt.cond)
         BranchInstr('bz', out_label, stmt.cond.end_reg)
 
+        entry_label.add_to_instr()
         gen_code(stmt.body)
         gen_code(stmt.update)
 
@@ -246,12 +279,10 @@ def gen_code(stmt):
 
     elif isinstance(stmt, ast.WhileStmt):
 
-        cond_label = Label(stmt.lines, 'WHILE_COND')
-        current_loop_cond_label = cond_label
+        current_loop_cond_label = cond_label = Label(stmt.lines, 'WHILE_COND')
         cond_label.add_to_instr()
-        out_label = Label(stmt.lines, 'WHILE_OUT')
 
-        current_break_out_label = out_label
+        current_break_out_label = out_label = Label(stmt.lines, 'WHILE_OUT')
 
         gen_code(stmt.cond)
 
@@ -264,8 +295,8 @@ def gen_code(stmt):
         out_label.add_to_instr()
 
     elif isinstance(stmt, ast.BreakStmt):
-        global current_break_out_label
-        BranchInstr('jmp', current_break_out_label)
+        global current_break_out_else_label
+        BranchInstr('jmp', current_break_out_else_label)
 
     elif isinstance(stmt, ast.ContinueStmt):
         global current_loop_cond_label
@@ -284,8 +315,9 @@ def gen_code(stmt):
         # if true, we're falling through to the then part, then must jump
         # out right before hitting the else part straight to the out part
 
-        then_part = Label(stmt.lines, 'THEN_PART')
-        else_part = Label(stmt.lines, 'ELSE_PART')
+        #global current_break_out_else_label, current_enter_then_label
+        current_enter_then_label = then_part = Label(stmt.lines, 'THEN_PART')
+        current_break_out_else_label = else_part = Label(stmt.lines, 'ELSE_PART')
         out_label = Label(stmt.lines, 'IF_STMT_OUT')
 
         gen_code(stmt.condition)
