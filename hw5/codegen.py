@@ -98,8 +98,6 @@ class MoveInstr:
 
         instr_list.append(self)
 
-    # is_src_const helps determine whether to put the 't' before the last arg.
-    # if it's a constant, there's no 't' as it's not a reg, it's the actual value
     def __str__(self):
         return "{} {}, {}".format(self.op, self.dst, self.src)
 
@@ -125,11 +123,9 @@ def generate_class_code(cls):
     for method in cls.methods:
         method.is_method = True
         gen_code(method)
-        #stmt_error(method.body)
         gen_code(method.body)
     for constr in cls.constructors:
         current_method = method
-        #stmt_error(method.body)
         gen_code(constr.body)
 
 def gen_code(stmt):
@@ -154,11 +150,9 @@ def gen_code(stmt):
         MoveInstr('move', stmt.lhs.end_reg, stmt.rhs.end_reg)
 
     elif isinstance(stmt, ast.VarExpr):
-        #stmt.end_reg = stmt.var.reg
         stmt.end_reg = stmt.var.reg
 
     elif isinstance(stmt, ast.ConstantExpr):
-        #reg = free_reg()
         if stmt.kind == 'int':
             reg = Register()
             MoveInstr('move_immed_i', reg, stmt.int, True)
@@ -178,7 +172,6 @@ def gen_code(stmt):
         gen_code(stmt.arg2)
 
         if stmt.arg1.end_reg and stmt.arg2.end_reg:
-            #reg = free_reg()
             reg = Register()
             if (stmt.bop != 'and') and (stmt.bop != 'or'):
                 ArithInstr('sub' if (stmt.bop == 'eq') or (stmt.bop == 'neq') else stmt.bop, reg,
@@ -258,11 +251,9 @@ def gen_code(stmt):
         gen_code(stmt.arg)
 
         if stmt.when == 'post':
-            #tmp_reg = free_reg()
             tmp_reg = Register()
             MoveInstr('move', tmp_reg, stmt.arg.end_reg)
 
-        #one_reg = free_reg()
         one_reg = Register()
 
         # Load 1 into a register
@@ -322,7 +313,6 @@ def gen_code(stmt):
         # if true, we're falling through to the then part, then must jump
         # out right before hitting the else part straight to the out part
 
-        #global current_break_out_else_label, current_enter_then_label
         current_enter_then_label = then_part = Label(stmt.lines, 'THEN_PART')
         current_break_out_else_label = else_part = Label(stmt.lines, 'ELSE_PART')
         out_label = Label(stmt.lines, 'IF_STMT_OUT')
