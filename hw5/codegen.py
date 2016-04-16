@@ -59,17 +59,15 @@ class Method:
         return "M_{}_{}:".format(self.name, self.id)
 
 class Label:
-    def __init__(self, name, out = False):
-        if out:
-            self.name = str(name) + '_OUT'
-        else:
-            self.name = name
+    def __init__(self, lines, name):
+        self.lines = lines
+        self.name = str(self.lines) + '_' + str(name)
 
     def add_to_instr(self):
         instr_list.append(self)
 
     def __str__(self):
-        return "L{}:".format(self.name)
+        return "L{}".format(self.name)
 
 class MoveInstr:
     def __init__(self, opcode, reg1, val, val_is_const = False):
@@ -80,7 +78,7 @@ class MoveInstr:
 
         instr_list.append(self)
 
-    # is_src_const helps detaermine whether to put the 't' before the last arg.
+    # is_src_const helps determine whether to put the 't' before the last arg.
     # if it's a constant, there's no 't' as it's not a reg, it's the actual value
     def __str__(self):
         return "{} {}, {}".format(self.op, self.dst, self.src)
@@ -159,7 +157,29 @@ def gen_code(stmt):
         if stmt.arg1.end_reg and stmt.arg2.end_reg:
             #reg = free_reg()
             reg = Register()
-            ArithInstr(stmt.bop, reg, stmt.arg1.end_reg, stmt.arg2.end_reg)
+            ArithInstr('sub' if (stmt.bop == 'eq') or (stmt.bop == 'neq') else stmt.bop, reg,
+                    stmt.arg1.end_reg, stmt.arg2.end_reg)
+
+            if (stmt.bop == 'eq'):
+
+                # check if r2 == r3
+                # 1. perform sub r1, r2, r3 (done above)
+                # 2. branch to set_one if r1 is zero
+                # 3. else, fall through and set r1 to zero
+                # 4. jump out so we don't set r1 to one by accident
+
+                ieq_set = Label(stmt.lines, 'SET_EQ')
+                ieq_out = Label(stmt.lines, 'SET_EQ_OUT')
+
+                BranchInstr('bz', ieq_set, reg)
+                MoveInstr('move_immed_i', reg, 0, True)
+                BranchInstr('jmp', ieq_out)
+                
+                ieq_set.add_to_instr()
+                MoveInstr('move_immed_i', reg, 1, True)
+
+                ieq_out.add_to_instr()
+
             stmt.end_reg = reg
 
     elif isinstance(stmt, ast.ForStmt):
@@ -179,9 +199,9 @@ def gen_code(stmt):
         # jump unconditionally back to the cond_label, where we eval if i is still < 10
         gen_code(stmt.init)
 
-        cond_label = Label(stmt.lines)
+        cond_label = Label(stmt.lines, 'FOR_COND')
         current_loop_cond_label = cond_label
-        out_label = Label(cond_label.name, True)
+        out_label = Label(stmt.lines, 'FOR_OUT')
         current_break_out_label = out_label
 
         cond_label.add_to_instr()
@@ -226,10 +246,10 @@ def gen_code(stmt):
 
     elif isinstance(stmt, ast.WhileStmt):
 
-        cond_label = Label(stmt.lines)
+        cond_label = Label(stmt.lines, 'WHILE_COND')
         current_loop_cond_label = cond_label
         cond_label.add_to_instr()
-        out_label = Label(cond_label.name, True)
+        out_label = Label(stmt.lines, 'WHILE_OUT')
 
         current_break_out_label = out_label
 
@@ -264,22 +284,24 @@ def gen_code(stmt):
         # if true, we're falling through to the then part, then must jump
         # out right before hitting the else part straight to the out part
 
-        then_label = Label(str(stmt.lines) + '_ELSE_STMT')
-        then_out_label = Label(then_label.name, True)
+        then_part = Label(stmt.lines, 'THEN_PART')
+        else_part = Label(stmt.lines, 'ELSE_PART')
+        out_label = Label(stmt.lines, 'IF_STMT_OUT')
 
         gen_code(stmt.condition)
 
-        BranchInstr('bnz', then_label, stmt.condition.end_reg)
+        BranchInstr('bnz', else_part, stmt.condition.end_reg)
 
+        then_part.add_to_instr()
         gen_code(stmt.thenpart)
 
-        BranchInstr('jmp', then_out_label)
+        BranchInstr('jmp', out_label)
 
-        then_label.add_to_instr()
+        else_part.add_to_instr()
 
         gen_code(stmt.elsepart)
 
-        then_out_label.add_to_instr()
+        out_label.add_to_instr()
 
     elif stmt.is_method:
         Method(stmt.name, stmt.id)
