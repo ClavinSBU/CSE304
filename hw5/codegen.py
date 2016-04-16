@@ -198,7 +198,7 @@ def gen_code(stmt):
                 BranchInstr('bz', ieq_set, reg)
                 MoveInstr('move_immed_i', reg, 0, True)
                 BranchInstr('jmp', ieq_out)
-                
+
                 ieq_set.add_to_instr()
                 MoveInstr('move_immed_i', reg, 1, True)
 
@@ -284,13 +284,16 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.WhileStmt):
 
         current_loop_continue_label = cond_label = Label(stmt.lines, 'WHILE_COND')
-        cond_label.add_to_instr()
-
+        current_enter_then_label = entry_label = Label(stmt.lines, 'WHILE_ENTRY')
         current_break_out_else_label = out_label = Label(stmt.lines, 'WHILE_OUT')
+
+        cond_label.add_to_instr()
 
         gen_code(stmt.cond)
 
         BranchInstr('bz', out_label, stmt.cond.end_reg)
+
+        entry_label.add_to_instr()
 
         gen_code(stmt.body)
 
