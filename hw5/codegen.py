@@ -3,7 +3,7 @@ import ast
 instr_list = []
 
 # global vars that hold label objects for different expressions / statements
-current_loop_cond_label = None # this holds the label to the cond of a loop
+current_loop_continue_label = None # this holds the label to the continue of a loop (for -> update, while -> cond)
 current_enter_then_label = None # holds the entrance of a loop, or the then part of if-stmt
 current_break_out_else_label = None # holds the loop's out, or else part of an if-stmt
 # if we're in an if stmt where:
@@ -147,6 +147,7 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.AssignExpr):
         gen_code(stmt.rhs)
         gen_code(stmt.lhs)
+        # TODO: why don't the types from the typechecker persist here?
         #if (str(stmt.lhs.type) == 'float') and (str(stmt.rhs.type) == 'int'):
         #    conv = Convert('itof', stmt.rhs.end_reg, False)
         #    stmt.rhs.end_reg = conv.dst
@@ -232,8 +233,9 @@ def gen_code(stmt):
         # jump unconditionally back to the cond_label, where we eval if i is still < 10
         gen_code(stmt.init)
 
-        current_loop_cond_label = cond_label = Label(stmt.lines, 'FOR_COND')
+        cond_label = Label(stmt.lines, 'FOR_COND')
         current_enter_then_label = entry_label = Label(stmt.lines, 'FOR_ENTRY')
+        current_loop_continue_label = continue_label = Label(stmt.lines, 'FOR_UPDATE')
         current_break_out_else_label = out_label = Label(stmt.lines, 'FOR_OUT')
 
         cond_label.add_to_instr()
@@ -243,6 +245,8 @@ def gen_code(stmt):
 
         entry_label.add_to_instr()
         gen_code(stmt.body)
+
+        continue_label.add_to_instr()
         gen_code(stmt.update)
 
         BranchInstr('jmp', cond_label)
@@ -279,10 +283,10 @@ def gen_code(stmt):
 
     elif isinstance(stmt, ast.WhileStmt):
 
-        current_loop_cond_label = cond_label = Label(stmt.lines, 'WHILE_COND')
+        current_loop_continue_label = cond_label = Label(stmt.lines, 'WHILE_COND')
         cond_label.add_to_instr()
 
-        current_break_out_label = out_label = Label(stmt.lines, 'WHILE_OUT')
+        current_break_out_else_label = out_label = Label(stmt.lines, 'WHILE_OUT')
 
         gen_code(stmt.cond)
 
@@ -299,8 +303,8 @@ def gen_code(stmt):
         BranchInstr('jmp', current_break_out_else_label)
 
     elif isinstance(stmt, ast.ContinueStmt):
-        global current_loop_cond_label
-        BranchInstr('jmp', current_loop_cond_label)
+        global current_loop_continue_label
+        BranchInstr('jmp', current_loop_continue_label)
 
     elif isinstance(stmt, ast.IfStmt):
 
