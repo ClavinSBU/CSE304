@@ -96,13 +96,10 @@ class Procedure:
             return "{} {}".format(self.opcode, self.arg)
 
 class Convert:
-    def __init__(self, op, reg, to_int):
+    def __init__(self, op, reg):
         self.op = op
         self.src = reg
-        if to_int:
-            self.dst = Register()
-        else:
-            self.dst = Register('f')
+        self.dst = Register()
 
         instr_list.append(self)
 
@@ -110,7 +107,7 @@ class Convert:
         return "{} {}, {}".format(self.op, self.dst, self.src)
 
 class Register:
-    def __init__(self, reg_type = 't', reg_num = None):
+    def __init__(self, reg_type='t', reg_num=None):
         self.reg_type = reg_type
         self.reg_num = reg_num
 
@@ -241,7 +238,7 @@ def gen_code(stmt):
             reg = Register()
             MoveInstr('move_immed_i', reg, stmt.int, True)
         elif stmt.kind == 'float':
-            reg = Register('f')
+            reg = Register()
             MoveInstr('move_immed_f', reg, stmt.float, True)
         elif stmt.kind == 'string':
             pass
