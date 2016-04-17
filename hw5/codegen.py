@@ -71,17 +71,29 @@ def generate_code(classtable):
 def generate_class_code(cls):
 
     for method in cls.methods:
-        method.is_method = True
-        gen_code(method)
+        Method(method.name, method.id)
         gen_code(method.body)
     for constr in cls.constructors:
-        current_method = method
+        Constructor(constr.id)
         gen_code(constr.body)
 
 def free_reg():
     ret = ast.var_reg
     ast.var_reg += 1
     return ret
+
+class Procedure:
+    def __init__(self, op, arg = None):
+        self.opcode = op
+        self.arg = arg
+
+        instr_list.append(self)
+
+    def __str__(self):
+        if self.arg is None:
+            return "{}".format(self.opcode)
+        else:
+            return "{} {}".format(self.opcode, self.arg)
 
 class Convert:
     def __init__(self, op, reg, to_int):
@@ -134,6 +146,15 @@ class Method:
 
     def __str__(self):
         return "M_{}_{}:".format(self.name, self.id)
+
+class Constructor:
+    def __init__(self, id):
+        self.id = id
+
+        instr_list.append(self)
+
+    def __str__(self):
+        return "C_{}:".format(self.id)
 
 class Label:
     def __init__(self, lines, name):
@@ -397,7 +418,7 @@ def gen_code(stmt):
 
         gen_code(stmt.base)
 
-        cls = ast.lookup(ast.classtable, stmt.base.classref.name)
+        cls = ast.lookup(ast.classtable, stmt.base.type.typename)
         field = ast.lookup(cls.fields, stmt.fname)
 
         offset_reg = Register()
@@ -412,8 +433,15 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.ClassReferenceExpr):
         stmt.end_reg = Register('sap')
 
-    elif stmt.is_method:
-        Method(stmt.name, stmt.id)
+    elif isinstance(stmt, ast.NewObjectExpr):
+        recd_addr = Register()
+        size_reg = Register()
+        MoveInstr('move_immed_i', size_reg, stmt.classref.size, True)
+        HeapInstr('halloc', recd_addr, size_reg)
+        # TODO: save regs, put args into arg regs
+        Procedure('call', 'C_' + str(stmt.constr_id))
+        # TODO: pop saved regs off stack
+        stmt.end_reg = recd_addr
 
     else:
         print 'need instance ' + str(type(stmt))

@@ -370,10 +370,11 @@ def expr_error(expr):
                 expr.type = ast.Type('error')
                 signal_error(
                     'Constructor argument number {0} is not a subtype '
-                    'of construtor parameter number {0}. Expects \'{1}\', received \'{}\'.'.format(
+                    'of construtor parameter number {0}. Expects \'{1}\', received \'{2}\'.'.format(
                         i + 1, nth_param.typename, nth_arg.typename), expr.lines)
                 return True
 
+        expr.constr_id = cls.constructors[0].id
         expr.type = ast.Type(expr.classref.name)
 
     elif isinstance(expr, ast.ClassReferenceExpr):
