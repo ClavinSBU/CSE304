@@ -24,6 +24,60 @@ current_break_out_else_label = None # holds the loop's out, or else part of an i
 # if x < y evals to true, jump into the body of the loop
 # which is the label held by current_enter_then_label
 
+static_field_offset = 0
+non_static_field_offset = 0
+
+# walks up a class' hierarchy and assigns each non-static field a
+# unique offset. at end, it sets the class' size to the field_offset
+def calc_nonstatic_offsets(cls):
+    global non_static_field_offset
+
+    if cls.superclass is not None:
+        calc_nonstatic_offsets(cls.superclass)
+
+    for field in cls.fields.viewvalues():
+        if field.storage == 'instance':
+            field.offset = non_static_field_offset
+            non_static_field_offset += 1
+
+    cls.size = non_static_field_offset
+
+def calc_static_offsets(cls):
+    global static_field_offset
+    for field in cls.fields.viewvalues():
+        if field.storage == 'static':
+            field.offset = static_field_offset
+            static_field_offset += 1
+
+def preprocess(cls):
+
+    global non_static_field_offset
+
+    calc_static_offsets(cls)
+
+    non_static_field_offset = 0
+    calc_nonstatic_offsets(cls)
+
+def generate_code(classtable):
+
+    for cls in classtable.viewvalues():
+        preprocess(cls)
+
+    instr_list.append('.static_data ' + str(static_field_offset))
+
+    for cls in classtable.viewvalues():
+        generate_class_code(cls)
+
+def generate_class_code(cls):
+
+    for method in cls.methods:
+        method.is_method = True
+        gen_code(method)
+        gen_code(method.body)
+    for constr in cls.constructors:
+        current_method = method
+        gen_code(constr.body)
+
 def free_reg():
     ret = ast.var_reg
     ast.var_reg += 1
@@ -48,11 +102,14 @@ class Register:
         self.reg_type = reg_type
         self.reg_num = reg_num
 
-        if self.reg_num == None:
+        if self.reg_num == None and self.reg_type != 'sap':
             self.reg_num = free_reg()
 
     def __str__(self):
-        return "{}{}".format(self.reg_type, self.reg_num)
+        if self.reg_type == 'sap':
+            return "{}".format(self.reg_type)
+        else:
+            return "{}{}".format(self.reg_type, self.reg_num)
 
 class BranchInstr:
     def __init__(self, opcode, label, reg = None):
@@ -113,20 +170,20 @@ class ArithInstr:
     def __str__(self):
         return "{} {}, {}, {}".format(self.op, self.dst, self.src1, self.src2)
 
+class HeapInstr:
+    def __init__(self, opcode, reg1, reg2, reg3 = None):
+        self.op = opcode
+        self.dst = reg1
+        self.src1 = reg2
+        self.src2 = reg3
 
-def generate_code(classtable):
-    for cls in classtable.viewvalues():
-        generate_class_code(cls)
+        instr_list.append(self)
 
-def generate_class_code(cls):
-
-    for method in cls.methods:
-        method.is_method = True
-        gen_code(method)
-        gen_code(method.body)
-    for constr in cls.constructors:
-        current_method = method
-        gen_code(constr.body)
+    def __str__(self):
+        if self.src2 is None:
+            return "{} {}, {}".format(self.op, self.dst, self.src1)
+        else:
+            return "{} {}, {}, {}".format(self.op, self.dst, self.src1, self.src2)
 
 def gen_code(stmt):
 
@@ -147,7 +204,11 @@ def gen_code(stmt):
         #if (str(stmt.lhs.type) == 'float') and (str(stmt.rhs.type) == 'int'):
         #    conv = Convert('itof', stmt.rhs.end_reg, False)
         #    stmt.rhs.end_reg = conv.dst
-        MoveInstr('move', stmt.lhs.end_reg, stmt.rhs.end_reg)
+
+        if not isinstance(stmt.lhs, ast.FieldAccessExpr):
+            MoveInstr('move', stmt.lhs.end_reg, stmt.rhs.end_reg)
+        else:
+            HeapInstr('hstore', stmt.lhs.base.end_reg, stmt.lhs.offset_reg, stmt.rhs.end_reg)
 
     elif isinstance(stmt, ast.VarExpr):
         stmt.end_reg = stmt.var.reg
@@ -331,6 +392,25 @@ def gen_code(stmt):
         gen_code(stmt.elsepart)
 
         out_label.add_to_instr()
+
+    elif isinstance(stmt, ast.FieldAccessExpr):
+
+        gen_code(stmt.base)
+
+        cls = ast.lookup(ast.classtable, stmt.base.classref.name)
+        field = ast.lookup(cls.fields, stmt.fname)
+
+        offset_reg = Register()
+        ret_reg = Register()
+
+        MoveInstr('move_immed_i', offset_reg, field.offset, True)
+        HeapInstr('hload', ret_reg, stmt.base.end_reg, offset_reg)
+
+        stmt.offset_reg = offset_reg
+        stmt.end_reg = ret_reg
+
+    elif isinstance(stmt, ast.ClassReferenceExpr):
+        stmt.end_reg = Register('sap')
 
     elif stmt.is_method:
         Method(stmt.name, stmt.id)
