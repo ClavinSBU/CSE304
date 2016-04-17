@@ -179,8 +179,8 @@ class MoveInstr:
         return "{} {}, {}".format(self.op, self.dst, self.src)
 
 class ArithInstr:
-    def __init__(self, opcode, reg1, reg2, reg3):
-        self.op = 'i' + str(opcode)
+    def __init__(self, opcode, reg1, reg2, reg3, type='i'):
+        self.op = type + str(opcode)
         self.dst = reg1
         self.src1 = reg2
         self.src2 = reg3
@@ -220,10 +220,9 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.AssignExpr):
         gen_code(stmt.rhs)
         gen_code(stmt.lhs)
-        # TODO: why don't the types from the typechecker persist here?
-        #if (str(stmt.lhs.type) == 'float') and (str(stmt.rhs.type) == 'int'):
-        #    conv = Convert('itof', stmt.rhs.end_reg, False)
-        #    stmt.rhs.end_reg = conv.dst
+        if stmt.lhs.type == ast.Type('float') and stmt.rhs.type == ast.Type('int'):
+            conv = Convert('itof', stmt.rhs.end_reg)
+            stmt.rhs.end_reg = conv.dst
 
         if not isinstance(stmt.lhs, ast.FieldAccessExpr):
             MoveInstr('move', stmt.lhs.end_reg, stmt.rhs.end_reg)
@@ -254,9 +253,25 @@ def gen_code(stmt):
 
         if stmt.arg1.end_reg and stmt.arg2.end_reg:
             reg = Register()
-            if (stmt.bop != 'and') and (stmt.bop != 'or'):
-                ArithInstr('sub' if (stmt.bop == 'eq') or (stmt.bop == 'neq') else stmt.bop, reg,
-                        stmt.arg1.end_reg, stmt.arg2.end_reg)
+            flt = ast.Type('float')
+            intg = ast.Type('int')
+            if stmt.arg1.type == flt or stmt.arg2.type == flt:
+                expr_type = 'f'
+            else:
+                expr_type = 'i'
+
+            if stmt.arg1.type == intg and stmt.arg2.type == flt:
+                conv = Convert('itof', stmt.arg1.end_reg)
+                stmt.arg1.end_reg = conv.dst
+            elif stmt.arg1.type == flt and stmt.arg2.type == intg:
+                conv = Convert('itof', stmt.arg2.end_reg)
+                stmt.arg2.end_reg = conv.dst
+
+            if (stmt.bop in ['add', 'sub', 'mul', 'div', 'gt', 'geq', 'lt', 'leq']):
+                ArithInstr(stmt.bop, reg, stmt.arg1.end_reg, stmt.arg2.end_reg, expr_type)
+
+            elif stmt.bop == 'eq' or stmt.bop == 'neq':
+                ArithInstr('sub', reg, stmt.arg1.end_reg, stmt.arg2.end_reg, expr_type)
 
             if (stmt.bop == 'eq'):
 
