@@ -124,7 +124,7 @@ class Register:
             return "{}{}".format(self.reg_type, self.reg_num)
 
 class BranchInstr:
-    def __init__(self, opcode, label, reg = None):
+    def __init__(self, opcode, label=None, reg=None):
         self.op = opcode
         self.reg = reg
         self.jmp_label = label
@@ -132,6 +132,8 @@ class BranchInstr:
         instr_list.append(self)
 
     def __str__(self):
+        if self.jmp_label is None:
+            return self.op
         if self.reg is None:
             return "{} {}".format(self.op, self.jmp_label)
         else:
@@ -168,7 +170,7 @@ class Label:
         return "L{}".format(self.name)
 
 class MoveInstr:
-    def __init__(self, opcode, reg1, val, val_is_const = False):
+    def __init__(self, opcode, reg1, val, val_is_const=False):
         self.op = opcode
         self.dst = reg1
         self.src = val
@@ -352,7 +354,16 @@ def gen_code(stmt):
         pass
 
     elif isinstance(stmt, ast.ReturnStmt):
-        pass
+
+        gen_code(stmt.expr)
+
+        # Load the result into a0
+        MoveInstr('move', Register('a', 0), stmt.expr.end_reg)
+
+        # TODO: Make sure everything is popped off the stack
+
+        # Return to caller
+        BranchInstr('ret')
 
     elif isinstance(stmt, ast.WhileStmt):
 
