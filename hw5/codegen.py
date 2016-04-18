@@ -241,6 +241,7 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.AssignExpr):
         gen_code(stmt.rhs)
         gen_code(stmt.lhs)
+
         if stmt.lhs.type == ast.Type('float') and stmt.rhs.type == ast.Type('int'):
             conv = Convert('itof', stmt.rhs.end_reg)
             stmt.rhs.end_reg = conv.dst
@@ -489,6 +490,22 @@ def gen_code(stmt):
         stmt.end_reg = recd_addr_reg
 
     elif isinstance(stmt, ast.ThisExpr):
+        stmt.end_reg = Register('a', 0)
+
+    elif isinstance(stmt, ast.MethodInvocationExpr):
+
+        gen_code(stmt.base)
+
+        cls = ast.lookup(ast.classtable, stmt.base.type.typename)
+        for method in cls.methods:
+            if stmt.mname == method.name:
+                break
+
+        if method.storage != 'static':
+            MoveInstr('move', Register('a', 0), stmt.base.end_reg)
+
+        Procedure('call', 'M_' + str(method.name) + '_' + str(method.id))
+
         stmt.end_reg = Register('a', 0)
 
     else:
