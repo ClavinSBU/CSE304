@@ -260,16 +260,19 @@ class Constructor:
         print "Constructor Body:"
         self.body.printout()
         
-var_reg = 0
+tmp_reg = 0
+arg_reg = 0
 class VarTable:
     """ Table of variables in each method/constructor"""
     def __init__(self):
-        global var_reg
+        global tmp_reg
+        global arg_reg
         self.vars = {0:{}}
         self.lastvar = 0
         self.lastblock = 0
         self.levels = [0]
-        var_reg = 0
+        tmp_reg = 0
+        arg_reg = 0
 
     def enter_block(self):
         self.lastblock += 1
@@ -281,16 +284,16 @@ class VarTable:
         # where should we check if we can indeed leave the block?
 
     def add_var(self, vname, vkind, vtype):
-        global var_reg
+        global tmp_reg, arg_reg
         self.lastvar += 1
         c = self.levels[0]   # current block number
         reg = None
         if vkind == 'local':
-            reg = codegen.Register('t', var_reg)
-            var_reg += 1
+            reg = codegen.Register('t', tmp_reg)
+            tmp_reg += 1
         if vkind == 'formal':
-            reg = codegen.Register('a', var_reg)
-            var_reg += 1
+            reg = codegen.Register('a', arg_reg)
+            arg_reg += 1
         v = Variable(vname, self.lastvar, vkind, vtype, reg)
         vbl = self.vars[c]  # list of variables in current block
         vbl[vname] = v

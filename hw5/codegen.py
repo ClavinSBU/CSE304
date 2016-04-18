@@ -96,8 +96,8 @@ def generate_class_code(cls):
         instr_list.append('ret')
 
 def free_reg():
-    ret = ast.var_reg
-    ast.var_reg += 1
+    ret = ast.tmp_reg
+    ast.tmp_reg += 1
     return ret
 
 class Procedure:
