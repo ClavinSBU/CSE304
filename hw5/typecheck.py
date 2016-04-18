@@ -73,9 +73,9 @@ def stmt_error(stmt):
             stmt.error = True
 
     elif isinstance(stmt, ast.ForStmt):
-        init_err = stmt_error(stmt.init)
+        init_err = expr_error(stmt.init)
         cond_err = expr_error(stmt.cond)
-        update_err = stmt_error(stmt.update)
+        update_err = expr_error(stmt.update)
         body_err = stmt_error(stmt.body)
         if cond_err:
             stmt.error = True
