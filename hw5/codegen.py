@@ -195,7 +195,7 @@ def gen_code(stmt):
                 # 4. jump out so we don't set r1 to one by accident
 
                 ieq_set = absmc.BranchLabel(stmt.lines, 'SET_EQ')
-                ieq_out = absmc.Label(stmt.lines, 'SET_EQ_OUT')
+                ieq_out = absmc.BranchLabel(stmt.lines, 'SET_EQ_OUT')
 
                 absmc.BranchInstr('bz', ieq_set, reg)
                 absmc.MoveInstr('move_immed_i', reg, 0, True)
