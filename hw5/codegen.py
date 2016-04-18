@@ -152,7 +152,7 @@ class BranchInstr:
         if self.reg is None:
             return "{} {}".format(self.op, self.jmp_label)
         else:
-            return "{} {} {}{}".format(self.op, self.jmp_label, self.reg.reg_type, self.reg.reg_num)
+            return "{} {}{}, {}".format(self.op, self.reg.reg_type, self.reg.reg_num, self.jmp_label)
 
 class Method:
     def __init__(self, name, id):
@@ -162,7 +162,10 @@ class Method:
         instr_list.append(self)
 
     def __str__(self):
-        return "M_{}_{}:".format(self.name, self.id)
+        if self.name == 'main':
+            return "__main__:"
+        else:
+            return "M_{}_{}:".format(self.name, self.id)
 
 class Constructor:
     def __init__(self, id):
@@ -179,7 +182,7 @@ class Label:
         self.name = str(self.lines) + '_' + str(name)
 
     def add_to_instr(self):
-        instr_list.append(self)
+        instr_list.append(str(self) + ':')
 
     def __str__(self):
         return "L{}".format(self.name)
@@ -442,7 +445,7 @@ def gen_code(stmt):
 
         gen_code(stmt.condition)
 
-        BranchInstr('bnz', else_part, stmt.condition.end_reg)
+        BranchInstr('bz', else_part, stmt.condition.end_reg)
 
         then_part.add_to_instr()
         gen_code(stmt.thenpart)
