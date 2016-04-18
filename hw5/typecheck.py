@@ -18,8 +18,8 @@ def check_class(cls):
         current_method = method
         stmt_error(method.body)
     for constr in cls.constructors:
-        current_method = method
-        stmt_error(method.body)
+        current_method = constr
+        stmt_error(constr.body)
     current_method = None
 
 
