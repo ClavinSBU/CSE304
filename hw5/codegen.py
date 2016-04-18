@@ -2,6 +2,22 @@ import ast
 
 instr_list = []
 
+# TODO:
+# Method and constructor invocation
+# 1. Save current registers
+# 2. Push args into arg registers
+# 3. Make sure the formal vars in the method/constructor shake hands with the arg registers
+# 4. Restore registers upon returning
+
+# The first local variable for each method should be t0, so must reset the count for each
+# time we generate code for a method
+
+# Must find a better way for short-circuit jumps to labels (stack implementation?)
+
+# Generate a main label that works with ami
+
+####################################################################################################
+
 # global vars that hold label objects for different expressions / statements
 current_loop_continue_label = None # this holds the label to the continue of a loop (for -> update, while -> cond)
 current_enter_then_label = None # holds the entrance of a loop, or the then part of if-stmt
