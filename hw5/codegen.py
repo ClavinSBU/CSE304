@@ -89,11 +89,9 @@ def generate_class_code(cls):
     for method in cls.methods:
         Method(method.name, method.id)
         gen_code(method.body)
-        instr_list.append('ret')
     for constr in cls.constructors:
         Constructor(constr.id)
         gen_code(constr.body)
-        instr_list.append('ret')
 
 def free_reg():
     ret = ast.tmp_reg
