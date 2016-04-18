@@ -35,6 +35,7 @@ current_break_out_else_label = None # holds the loop's out, or else part of an i
 
 static_field_offset = 0
 non_static_field_offset = 0
+current_method = None
 
 # walks up a class' hierarchy and assigns each non-static field a
 # unique offset. at end, it sets the class' size to the field_offset
@@ -108,8 +109,11 @@ def setup_registers(method):
 
 def generate_class_code(cls):
 
+    global current_method
+
     for method in cls.methods:
         setup_registers(method)
+        current_method = method
         Method(method.name, method.id)
         gen_code(method.body)
     for constr in cls.constructors:
@@ -523,7 +527,29 @@ def gen_code(stmt):
             if stmt.mname == method.name:
                 break
 
+        saved_regs = []
+
+        # add a0 if the current method is not static
+        if current_method.storage != 'static':
+            saved_regs.append(Register('a', 0))
+
+        # for each var in each block of the current method, add to save list
+        for block in range(0, len(current_method.vars.vars)):
+            for var in current_method.vars.vars[block].values():
+                saved_regs.append(var.reg)
+
+        # save each reg in the saved list
+        for reg in saved_regs:
+            Procedure('save', reg)
+
         Procedure('call', 'M_' + str(method.name) + '_' + str(method.id))
+
+        # reverse the list so we can pop them off
+        saved_regs.reverse()
+
+        # restore regs from the now-reversed save list
+        for reg in saved_regs:
+            Procedure('restore', reg)
 
         stmt.end_reg = Register('a', 0)
 
