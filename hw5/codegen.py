@@ -3,10 +3,6 @@ import ast
 instr_list = []
 
 # TODO:
-# Method and constructor invocation
-# 1. Save current registers
-# 4. Restore registers upon returning
-
 # Must find a better way for short-circuit jumps to labels (stack implementation?)
 
 ####################################################################################################
@@ -509,10 +505,33 @@ def gen_code(stmt):
         size_reg = Register()
         MoveInstr('move_immed_i', size_reg, stmt.classref.size, True)
         HeapInstr('halloc', recd_addr_reg, size_reg)
-        # TODO: save regs, put args into arg regs
+
+        saved_regs = []
+
+        saved_regs.append(recd_addr_reg)
+
+        # add a0 if the current method is not static
+        if current_method.storage != 'static':
+            saved_regs.append(Register('a', 0))
+
+        # for each var in each block of the current method, add to save list
+        for block in range(0, len(current_method.vars.vars)):
+            for var in current_method.vars.vars[block].values():
+                saved_regs.append(var.reg)
+
+        # save each reg in the saved list
+        for reg in saved_regs:
+            Procedure('save', reg)
+
         MoveInstr('move', Register('a', 0), recd_addr_reg)
         Procedure('call', 'C_' + str(stmt.constr_id))
-        # TODO: pop saved regs off stack
+        # reverse the list so we can pop them off
+        saved_regs.reverse()
+
+        # restore regs from the now-reversed save list
+        for reg in saved_regs:
+            Procedure('restore', reg)
+
         stmt.end_reg = recd_addr_reg
 
     elif isinstance(stmt, ast.ThisExpr):
