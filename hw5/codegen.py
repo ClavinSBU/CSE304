@@ -436,14 +436,15 @@ def gen_code(stmt):
         stmt.end_reg = Register('sap')
 
     elif isinstance(stmt, ast.NewObjectExpr):
-        recd_addr = Register()
+        recd_addr_reg = Register()
         size_reg = Register()
         MoveInstr('move_immed_i', size_reg, stmt.classref.size, True)
-        HeapInstr('halloc', recd_addr, size_reg)
+        HeapInstr('halloc', recd_addr_reg, size_reg)
         # TODO: save regs, put args into arg regs
+        MoveInstr('move', Register('a', 0), recd_addr_reg)
         Procedure('call', 'C_' + str(stmt.constr_id))
         # TODO: pop saved regs off stack
-        stmt.end_reg = recd_addr
+        stmt.end_reg = recd_addr_reg
 
     elif isinstance(stmt, ast.ThisExpr):
         stmt.end_reg = Register('a', 0)
