@@ -10,6 +10,7 @@ import decafparser
 import ast
 import typecheck
 import codegen
+from absmc import machine
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -45,7 +46,7 @@ def main(argv=None):
                 # AST OK. Print and exit
                 ast.print_ast()
                 codegen.generate_code(ast.classtable)
-                for i in codegen.instr_list:
+                for i in machine.instr_list:
                     print i
                 return 0
         print "Failure: there were errors."

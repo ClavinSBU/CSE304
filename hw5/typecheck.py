@@ -27,7 +27,7 @@ def check_class(cls):
 
 def ensure_return_exists(block):
     '''Ensure a return statement exists at the end of a method.'''
-    if len(block.stmtlist) > 0:
+    if isinstance(block, ast.BlockStmt) and len(block.stmtlist) > 0:
         if not (isinstance(block.stmtlist[-1], ast.SkipStmt) or
                 isinstance(block.stmtlist[-1], ast.ReturnStmt)):
             block.stmtlist.append(ast.ReturnStmt(None, None))
