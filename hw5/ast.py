@@ -1,6 +1,3 @@
-
-import codegen
-
 classtable = {}  # initially empty dictionary of classes.
 lastmethod = 0
 lastconstructor = 0
@@ -25,7 +22,6 @@ def print_ast():
 
 def initialize_ast():
     # define In class:
-    """
     cin = Class("In", None)
     cin.builtin = True     # this is a builtin class
     cout = Class("Out", None)
@@ -61,7 +57,6 @@ def initialize_ast():
 
     addtotable(classtable, "In", cin)
     addtotable(classtable, "Out", cout)
-    """
 
 
 class Class:
@@ -260,19 +255,14 @@ class Constructor:
         print "Constructor Body:"
         self.body.printout()
         
-tmp_reg = 0
-arg_reg = 0
+
 class VarTable:
     """ Table of variables in each method/constructor"""
     def __init__(self):
-        global tmp_reg
-        global arg_reg
         self.vars = {0:{}}
         self.lastvar = 0
         self.lastblock = 0
         self.levels = [0]
-        tmp_reg = 0
-        arg_reg = 0
 
     def enter_block(self):
         self.lastblock += 1
@@ -284,20 +274,11 @@ class VarTable:
         # where should we check if we can indeed leave the block?
 
     def add_var(self, vname, vkind, vtype):
-        global tmp_reg, arg_reg
         self.lastvar += 1
         c = self.levels[0]   # current block number
-        reg = None
-        if vkind == 'local':
-            reg = codegen.Register('t', tmp_reg)
-            tmp_reg += 1
-        if vkind == 'formal':
-            reg = codegen.Register('a', arg_reg)
-            arg_reg += 1
-        v = Variable(vname, self.lastvar, vkind, vtype, reg)
+        v = Variable(vname, self.lastvar, vkind, vtype)
         vbl = self.vars[c]  # list of variables in current block
         vbl[vname] = v
-        print 'var ' + str(vname) + ' given ' + str(reg)
     
     def _find_in_block(self, vname, b):
         if (b in self.vars):
@@ -333,12 +314,11 @@ class VarTable:
 
 class Variable:
     """ Record for a single variable"""
-    def __init__(self, vname, id, vkind, vtype, reg):
+    def __init__(self, vname, id, vkind, vtype):
         self.name = vname
         self.id = id
         self.kind = vkind
         self.type = vtype
-        self.reg = reg
 
     def printout(self):
         print "VARIABLE {0}, {1}, {2}, {3}".format(self.id, self.name, self.kind, self.type)

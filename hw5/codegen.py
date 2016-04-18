@@ -5,16 +5,9 @@ instr_list = []
 # TODO:
 # Method and constructor invocation
 # 1. Save current registers
-# 2. Push args into arg registers
-# 3. Make sure the formal vars in the method/constructor shake hands with the arg registers
 # 4. Restore registers upon returning
 
-# The first local variable for each method should be t0, so must reset the count for each
-# time we generate code for a method
-
 # Must find a better way for short-circuit jumps to labels (stack implementation?)
-
-# Generate a main label that works with ami
 
 ####################################################################################################
 
@@ -84,9 +77,39 @@ def generate_code(classtable):
     for cls in classtable.viewvalues():
         generate_class_code(cls)
 
+reg_count = 0
+
+def setup_registers(method):
+    global reg_count
+
+    reg_count = 0
+
+    # block 0 are the formals, which go into args
+    # if static, first arg is a0,
+    # if instance, first arg is a1, as this goes in a0
+    for var in method.vars.vars[0].values():
+        if method.storage == 'static':
+            var.reg = Register('a', reg_count)
+        else:
+            var.reg = Register('a', reg_count + 1)
+        reg_count += 1
+
+        print 'var ' + str(var.name) + ' given ' + str(var.reg)
+
+    reg_count = 0
+
+    # rest of the vars in the method go into t registers
+    for block in range(1, len(method.vars.vars)):
+        for var in method.vars.vars[block].values():
+            var.reg = Register('t', reg_count)
+            reg_count += 1
+
+            print 'var ' + str(var.name) + ' given ' + str(var.reg)
+
 def generate_class_code(cls):
 
     for method in cls.methods:
+        setup_registers(method)
         Method(method.name, method.id)
         gen_code(method.body)
         instr_list.append('ret')
@@ -96,8 +119,9 @@ def generate_class_code(cls):
         instr_list.append('ret')
 
 def free_reg():
-    ret = ast.tmp_reg
-    ast.tmp_reg += 1
+    global reg_count
+    ret = reg_count
+    reg_count += 1
     return ret
 
 class Procedure:
@@ -500,13 +524,6 @@ def gen_code(stmt):
         for method in cls.methods:
             if stmt.mname == method.name:
                 break
-
-        if method.storage != 'static':
-            MoveInstr('move', Register('a', 0), stmt.base.end_reg)
-            # must add one to each arg reg as 'this' is in arg0,
-            # so we must pushe each arg to the next reg
-            for i in method.vars.vars[0].values():
-                i.reg.reg_num = i.reg.reg_num + 1
 
         Procedure('call', 'M_' + str(method.name) + '_' + str(method.id))
 
