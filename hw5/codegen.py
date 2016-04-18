@@ -98,13 +98,10 @@ class Procedure:
             return "{} {}".format(self.opcode, self.arg)
 
 class Convert:
-    def __init__(self, op, reg, to_int):
+    def __init__(self, op, reg):
         self.op = op
         self.src = reg
-        if to_int:
-            self.dst = Register()
-        else:
-            self.dst = Register('f')
+        self.dst = Register()
 
         instr_list.append(self)
 
@@ -112,7 +109,7 @@ class Convert:
         return "{} {}, {}".format(self.op, self.dst, self.src)
 
 class Register:
-    def __init__(self, reg_type = 't', reg_num = None):
+    def __init__(self, reg_type='t', reg_num=None):
         self.reg_type = reg_type
         self.reg_num = reg_num
 
@@ -126,7 +123,7 @@ class Register:
             return "{}{}".format(self.reg_type, self.reg_num)
 
 class BranchInstr:
-    def __init__(self, opcode, label, reg = None):
+    def __init__(self, opcode, label=None, reg=None):
         self.op = opcode
         self.reg = reg
         self.jmp_label = label
@@ -134,6 +131,8 @@ class BranchInstr:
         instr_list.append(self)
 
     def __str__(self):
+        if self.jmp_label is None:
+            return self.op
         if self.reg is None:
             return "{} {}".format(self.op, self.jmp_label)
         else:
@@ -170,7 +169,7 @@ class Label:
         return "L{}".format(self.name)
 
 class MoveInstr:
-    def __init__(self, opcode, reg1, val, val_is_const = False):
+    def __init__(self, opcode, reg1, val, val_is_const=False):
         self.op = opcode
         self.dst = reg1
         self.src = val
@@ -182,8 +181,8 @@ class MoveInstr:
         return "{} {}, {}".format(self.op, self.dst, self.src)
 
 class ArithInstr:
-    def __init__(self, opcode, reg1, reg2, reg3):
-        self.op = 'i' + str(opcode)
+    def __init__(self, opcode, reg1, reg2, reg3, type='i'):
+        self.op = type + str(opcode)
         self.dst = reg1
         self.src1 = reg2
         self.src2 = reg3
@@ -223,10 +222,9 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.AssignExpr):
         gen_code(stmt.rhs)
         gen_code(stmt.lhs)
-        # TODO: why don't the types from the typechecker persist here?
-        #if (str(stmt.lhs.type) == 'float') and (str(stmt.rhs.type) == 'int'):
-        #    conv = Convert('itof', stmt.rhs.end_reg, False)
-        #    stmt.rhs.end_reg = conv.dst
+        if stmt.lhs.type == ast.Type('float') and stmt.rhs.type == ast.Type('int'):
+            conv = Convert('itof', stmt.rhs.end_reg)
+            stmt.rhs.end_reg = conv.dst
 
         if not isinstance(stmt.lhs, ast.FieldAccessExpr):
             MoveInstr('move', stmt.lhs.end_reg, stmt.rhs.end_reg)
@@ -241,7 +239,7 @@ def gen_code(stmt):
             reg = Register()
             MoveInstr('move_immed_i', reg, stmt.int, True)
         elif stmt.kind == 'float':
-            reg = Register('f')
+            reg = Register()
             MoveInstr('move_immed_f', reg, stmt.float, True)
         elif stmt.kind == 'string':
             pass
@@ -257,9 +255,25 @@ def gen_code(stmt):
 
         if stmt.arg1.end_reg and stmt.arg2.end_reg:
             reg = Register()
-            if (stmt.bop != 'and') and (stmt.bop != 'or'):
-                ArithInstr('sub' if (stmt.bop == 'eq') or (stmt.bop == 'neq') else stmt.bop, reg,
-                        stmt.arg1.end_reg, stmt.arg2.end_reg)
+            flt = ast.Type('float')
+            intg = ast.Type('int')
+            if stmt.arg1.type == flt or stmt.arg2.type == flt:
+                expr_type = 'f'
+            else:
+                expr_type = 'i'
+
+            if stmt.arg1.type == intg and stmt.arg2.type == flt:
+                conv = Convert('itof', stmt.arg1.end_reg)
+                stmt.arg1.end_reg = conv.dst
+            elif stmt.arg1.type == flt and stmt.arg2.type == intg:
+                conv = Convert('itof', stmt.arg2.end_reg)
+                stmt.arg2.end_reg = conv.dst
+
+            if (stmt.bop in ['add', 'sub', 'mul', 'div', 'gt', 'geq', 'lt', 'leq']):
+                ArithInstr(stmt.bop, reg, stmt.arg1.end_reg, stmt.arg2.end_reg, expr_type)
+
+            elif stmt.bop == 'eq' or stmt.bop == 'neq':
+                ArithInstr('sub', reg, stmt.arg1.end_reg, stmt.arg2.end_reg, expr_type)
 
             if (stmt.bop == 'eq'):
 
@@ -354,7 +368,16 @@ def gen_code(stmt):
         pass
 
     elif isinstance(stmt, ast.ReturnStmt):
-        pass
+
+        gen_code(stmt.expr)
+
+        # Load the result into a0
+        MoveInstr('move', Register('a', 0), stmt.expr.end_reg)
+
+        # TODO: Make sure everything is popped off the stack
+
+        # Return to caller
+        BranchInstr('ret')
 
     elif isinstance(stmt, ast.WhileStmt):
 
