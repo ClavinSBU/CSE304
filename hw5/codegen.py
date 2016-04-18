@@ -503,6 +503,10 @@ def gen_code(stmt):
 
         if method.storage != 'static':
             MoveInstr('move', Register('a', 0), stmt.base.end_reg)
+            # must add one to each arg reg as 'this' is in arg0,
+            # so we must pushe each arg to the next reg
+            for i in method.vars.vars[0].values():
+                i.reg.reg_num = i.reg.reg_num + 1
 
         Procedure('call', 'M_' + str(method.name) + '_' + str(method.id))
 

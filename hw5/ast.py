@@ -264,10 +264,12 @@ var_reg = 0
 class VarTable:
     """ Table of variables in each method/constructor"""
     def __init__(self):
+        global var_reg
         self.vars = {0:{}}
         self.lastvar = 0
         self.lastblock = 0
         self.levels = [0]
+        var_reg = 0
 
     def enter_block(self):
         self.lastblock += 1
@@ -286,10 +288,13 @@ class VarTable:
         if vkind == 'local':
             reg = codegen.Register('t', var_reg)
             var_reg += 1
+        if vkind == 'formal':
+            reg = codegen.Register('a', var_reg)
+            var_reg += 1
         v = Variable(vname, self.lastvar, vkind, vtype, reg)
         vbl = self.vars[c]  # list of variables in current block
         vbl[vname] = v
-        print 'var ' + str(vname) + ' given ' + str(var_reg - 1)
+        print 'var ' + str(vname) + ' given ' + str(reg)
     
     def _find_in_block(self, vname, b):
         if (b in self.vars):
