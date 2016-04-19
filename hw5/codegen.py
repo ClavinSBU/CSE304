@@ -113,12 +113,19 @@ def generate_class_code(cls):
     for method in cls.methods:
         setup_registers(method)
         current_method = method
+        method.returned = False
         absmc.MethodLabel(method.name, method.id)
         gen_code(method.body)
+        if not method.returned:
+            absmc.ProcedureInstr('ret')
     for constr in cls.constructors:
         setup_registers(constr)
+        current_method = constr
+        constr.returned = False
         absmc.ConstructorLabel(constr.id)
         gen_code(constr.body)
+        if not constr.returned:
+            absmc.ProcedureInstr('ret')  # We assume constrs don't have a return
 
 
 def gen_code(stmt):
@@ -277,6 +284,7 @@ def gen_code(stmt):
         pass
 
     elif isinstance(stmt, ast.ReturnStmt):
+        current_method.returned = True
         if stmt.expr is None:
             absmc.ProcedureInstr('ret')
             return
