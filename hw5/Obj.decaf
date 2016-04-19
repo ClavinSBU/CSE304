@@ -1,0 +1,28 @@
+
+class Object {
+
+  private int field;
+  public static int st_field;
+  public int pub_field;
+  private float fl;
+
+  public Object(int a, float y) {
+    this.field = a;
+    this.fl = y;
+  }
+
+  public float getFloat() {
+    return this.fl;
+  }
+}
+
+class Main {
+
+  public static void main() {
+    float i;
+    Object obj;
+    obj = new Object(4, 11.5);
+
+    i = obj.getFloat();
+  }
+}
