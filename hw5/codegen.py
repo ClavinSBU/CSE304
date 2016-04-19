@@ -407,11 +407,9 @@ def gen_code(stmt):
 
         absmc.MoveInstr('move', absmc.Register('a', 0), recd_addr_reg)
         absmc.ProcedureInstr('call', 'C_{}'.format(stmt.constr_id))
-        # reverse the list so we can pop them off
-        saved_regs.reverse()
 
         # restore regs from the now-reversed save list
-        for reg in saved_regs:
+        for reg in reversed(saved_regs):
             absmc.ProcedureInstr('restore', reg)
 
         stmt.end_reg = recd_addr_reg
@@ -444,11 +442,13 @@ def gen_code(stmt):
 
         absmc.ProcedureInstr('call', 'M_{}_{}'.format(method.name, method.id))
 
+        # Store the result in a temporary register
+        stmt.end_reg = absmc.Register()
+        absmc.MoveInstr('move', stmt.end_reg, absmc.Register('a', 0))
+
         # restore regs from the reversed save list
         for reg in reversed(saved_regs):
             absmc.ProcedureInstr('restore', reg)
-
-        stmt.end_reg = absmc.Register('a', 0)
 
     elif isinstance(stmt, ast.UnaryExpr):
         gen_code(stmt.arg)
