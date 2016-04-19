@@ -2,16 +2,17 @@ import ast
 import absmc
 
 # TODO:
-# Must find a better way for short-circuit jumps to labels (stack implementation?)
-# Push args into 'a' registers for method invoc, and newobjexpr
+# ??
 
 ####################################################################################################
 
 # Global vars that hold label objects for different expressions / statements
+label_scope = []
 
 # This holds the label used for a `continue` statement in a loop
 # For `for` loops, this points to the update expression
 # For `while` loops, this points to the condition expression
+
 current_loop_continue_label = None
 
 # This holds the entrance of a loop, or the then part of an if statement
@@ -42,6 +43,21 @@ current_break_out_else_label = None
 non_static_field_offset = 0
 current_method = None
 
+def push_labels():
+    global label_scope
+    global current_loop_continue_label, current_enter_then_label, current_break_out_else_label
+
+    label_scope.append(current_loop_continue_label)
+    label_scope.append(current_enter_then_label)
+    label_scope.append(current_break_out_else_label)
+
+def pop_labels():
+    global label_scope
+    global current_loop_continue_label, current_enter_then_label, current_break_out_else_label
+
+    current_break_out_else_label = label_scope.pop()
+    current_enter_then_label = label_scope.pop()
+    current_loop_continue_label = label_scope.pop()
 
 def calc_nonstatic_offsets(cls):
     '''Calculates the offsets for all instance fields of a class.
@@ -134,6 +150,7 @@ def gen_code(stmt):
     global current_loop_continue_label, current_enter_then_label, current_break_out_else_label
     # stmt.end_reg is the destination register for each expression
     stmt.end_reg = None
+    push_labels()
 
     if isinstance(stmt, ast.BlockStmt):
         for stmt_line in stmt.stmtlist:
@@ -236,6 +253,7 @@ def gen_code(stmt):
             stmt.end_reg = reg
 
     elif isinstance(stmt, ast.ForStmt):
+
         # for-loop:
         # for (i = 0; i < 10; i++) {
         #   body
@@ -307,6 +325,7 @@ def gen_code(stmt):
         absmc.ProcedureInstr('ret')
 
     elif isinstance(stmt, ast.WhileStmt):
+
         current_loop_continue_label = cond_label = absmc.BranchLabel(stmt.lines, 'WHILE_COND')
         current_enter_then_label = entry_label = absmc.BranchLabel(stmt.lines, 'WHILE_ENTRY')
         current_break_out_else_label = out_label = absmc.BranchLabel(stmt.lines, 'WHILE_OUT')
@@ -332,6 +351,7 @@ def gen_code(stmt):
         absmc.BranchInstr('jmp', current_loop_continue_label)
 
     elif isinstance(stmt, ast.IfStmt):
+
         # if (x == y)
         #   ++x;
         # else
@@ -510,3 +530,5 @@ def gen_code(stmt):
 
     else:
         print 'need instance ' + str(type(stmt))
+
+    pop_labels()
