@@ -44,10 +44,8 @@ def main(argv=None):
             typecheck.check_classes(ast.classtable)
             if not typecheck.error_flag:
                 # AST OK. Print and exit
-                ast.print_ast()
                 codegen.generate_code(ast.classtable)
-                for i in machine.instr_list:
-                    print i
+                print machine
                 return 0
         print "Failure: there were errors."
     except Usage, err:
