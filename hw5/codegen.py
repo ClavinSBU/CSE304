@@ -122,7 +122,7 @@ def generate_class_code(cls):
 
 
 def gen_code(stmt):
-
+    global current_loop_continue_label, current_enter_then_label, current_break_out_else_label
     # stmt.end_reg is the destination register for each expression
     stmt.end_reg = None
 
@@ -161,8 +161,6 @@ def gen_code(stmt):
         stmt.end_reg = reg
 
     elif isinstance(stmt, ast.BinaryExpr):
-        global current_break_out_else_label, current_enter_then_label
-
         gen_code(stmt.arg1)
         gen_code(stmt.arg2)
 
@@ -221,7 +219,6 @@ def gen_code(stmt):
             stmt.end_reg = reg
 
     elif isinstance(stmt, ast.ForStmt):
-
         # for-loop:
         # for (i = 0; i < 10; i++) {
         #   body
@@ -311,15 +308,12 @@ def gen_code(stmt):
         out_label.add_to_code()
 
     elif isinstance(stmt, ast.BreakStmt):
-        global current_break_out_else_label
         absmc.BranchInstr('jmp', current_break_out_else_label)
 
     elif isinstance(stmt, ast.ContinueStmt):
-        global current_loop_continue_label
         absmc.BranchInstr('jmp', current_loop_continue_label)
 
     elif isinstance(stmt, ast.IfStmt):
-
         # if (x == y)
         #   ++x;
         # else
