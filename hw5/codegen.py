@@ -432,11 +432,8 @@ def gen_code(stmt):
 
         absmc.ProcedureInstr('call', 'M_{}_{}'.format(method.name, method.id))
 
-        # reverse the list so we can pop them off
-        saved_regs.reverse()
-
-        # restore regs from the now-reversed save list
-        for reg in saved_regs:
+        # restore regs from the reversed save list
+        for reg in reversed(saved_regs):
             absmc.ProcedureInstr('restore', reg)
 
         stmt.end_reg = absmc.Register('a', 0)
