@@ -6,7 +6,7 @@ class AbstractMachine(object):
 
     def add_instr(self, instr):
         if len(self.labels) > 0:
-            instr.label = '\n'.join([str(label) for label in self.labels])
+            instr.label = ':\n'.join([str(label) for label in self.labels])
             self.labels = []
         self.instr_list.append(instr)
 
