@@ -3,6 +3,9 @@ import absmc
 
 # TODO:
 # Must find a better way for short-circuit jumps to labels (stack implementation?)
+# Fix no-param constructors
+# Super
+# Lost .static_data?
 
 ####################################################################################################
 
@@ -151,12 +154,20 @@ def gen_code(stmt):
 
     elif isinstance(stmt, ast.ConstantExpr):
         reg = absmc.Register()
+
         if stmt.kind == 'int':
             absmc.MoveInstr('move_immed_i', reg, stmt.int, True)
         elif stmt.kind == 'float':
             absmc.MoveInstr('move_immed_f', reg, stmt.float, True)
         elif stmt.kind == 'string':
             pass
+        elif stmt.kind == 'True':
+            absmc.MoveInstr('move_immed_i', reg, 1, True)
+        elif stmt.kind == 'False':
+            absmc.MoveInstr('move_immed_i', reg, 0, True)
+        elif stmt.kind == 'Null':
+            absmc.MoveInstr('move_immed_i', reg, 'Null', True)
+
 
         stmt.end_reg = reg
 
@@ -438,6 +449,34 @@ def gen_code(stmt):
             absmc.ProcedureInstr('restore', reg)
 
         stmt.end_reg = absmc.Register('a', 0)
+
+    elif isinstance(stmt, ast.UnaryExpr):
+        gen_code(stmt.arg)
+
+        ret = absmc.Register()
+        if stmt.uop == 'uminus':
+            # TODO: what if it's a float??
+            zero_reg = absmc.Register()
+            # if uminus, put 0 - <reg> into the return reg
+            absmc.MoveInstr('move_immed_i', zero_reg, 0, True)
+            absmc.ArithInstr('sub', ret, zero_reg, stmt.arg.end_reg)
+        else:
+            # if it's a 0, branch to set 1
+            # if it's a 1, we're falling through, setting to 0, and jumping out
+            set_one_label = absmc.BranchLabel(stmt.lines, 'SET_ONE')
+            out_label = absmc.BranchLabel(stmt.lines, 'UNARY_OUT')
+
+            absmc.BranchInstr('bz', set_one_label, stmt.arg.end_reg)
+            absmc.MoveInstr('move_immed_i', ret, 0, True)
+            absmc.BranchInstr('jmp', out_label)
+
+            set_one_label.add_to_code()
+
+            absmc.MoveInstr('move_immed_i', ret, 1, True)
+
+            out_label.add_to_code()
+
+        stmt.end_reg = ret
 
     else:
         print 'need instance ' + str(type(stmt))
