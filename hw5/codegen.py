@@ -408,6 +408,14 @@ def gen_code(stmt):
             absmc.ProcedureInstr('save', reg)
 
         absmc.MoveInstr('move', absmc.Register('a', 0), recd_addr_reg)
+
+        arg_reg_index = 1
+
+        for arg in stmt.args:
+            gen_code(arg)
+            absmc.MoveInstr('move', absmc.Register('a', arg_reg_index), arg.end_reg)
+            arg_reg_index += 1
+
         absmc.ProcedureInstr('call', 'C_{}'.format(stmt.constr_id))
 
         # restore regs from the now-reversed save list
