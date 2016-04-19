@@ -278,6 +278,9 @@ def gen_code(stmt):
         pass
 
     elif isinstance(stmt, ast.ReturnStmt):
+        if stmt.expr is None:
+            absmc.ProcedureInstr('ret')
+            return
         gen_code(stmt.expr)
 
         # Load the result into a0
