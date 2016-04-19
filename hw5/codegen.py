@@ -3,9 +3,7 @@ import absmc
 
 # TODO:
 # Must find a better way for short-circuit jumps to labels (stack implementation?)
-# Fix no-param constructors
-# Lost .static_data?
-# Push args into 'a' registers
+# Push args into 'a' registers for method invoc, and newobjexpr
 
 ####################################################################################################
 
@@ -387,6 +385,10 @@ def gen_code(stmt):
         size_reg = absmc.Register()
         absmc.MoveInstr('move_immed_i', size_reg, stmt.classref.size, True)
         absmc.HeapInstr('halloc', recd_addr_reg, size_reg)
+
+        if stmt.constr_id is None:
+            stmt.end_reg = recd_addr_reg
+            return
 
         saved_regs = []
 

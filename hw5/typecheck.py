@@ -346,6 +346,8 @@ def expr_error(expr):
 
         cls = ast.lookup(ast.classtable, expr.classref.name)
 
+        expr.constr_id = None
+
         # After ensuring the # of args match, if there's no constructor, allow it
         if len(cls.constructors) == 0 and len(expr.args) == 0:
             expr.type = ast.Type(expr.classref.name)
@@ -385,6 +387,7 @@ def expr_error(expr):
                 return True
 
         expr.constr_id = cls.constructors[0].id
+
         expr.type = ast.Type(expr.classref.name)
 
     elif isinstance(expr, ast.ClassReferenceExpr):
