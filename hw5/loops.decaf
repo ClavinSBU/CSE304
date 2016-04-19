@@ -1,0 +1,41 @@
+class Loops {
+    private boolean exec;
+    public int counter;
+
+    public Loop() {
+        this.exec = true;
+        while(this.exec) {
+            if (this.counter++ >= 10)
+                break;
+            else
+                continue;
+        }
+    }
+
+    public void forloop(int i) {
+        int j;
+        for(j = 0; j < i; j = j*2) {
+            i++;
+            if ((i / 2)*2 == i) // i is even
+                continue;
+        }
+    }
+}
+
+class MoreLoops extends Loops {
+    public int more;
+
+    public float nevermore(float x, float y, float z) {
+        int accum;
+        accum = 0;
+        while (x < y) {
+            z = z + y;
+            y = y + x;
+            x = x + z;
+            accum = accum*2 + 3;
+        }
+        this.more = accum;
+        this.forloop(this.more);
+        return accum;
+    }
+}
