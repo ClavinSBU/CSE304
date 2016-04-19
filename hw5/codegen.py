@@ -455,11 +455,14 @@ def gen_code(stmt):
 
         ret = absmc.Register()
         if stmt.uop == 'uminus':
-            # TODO: what if it's a float??
             zero_reg = absmc.Register()
+            if stmt.arg.type == ast.Type('float'):
+                prefix = 'f'
+            else:
+                prefix = 'i'
             # if uminus, put 0 - <reg> into the return reg
-            absmc.MoveInstr('move_immed_i', zero_reg, 0, True)
-            absmc.ArithInstr('sub', ret, zero_reg, stmt.arg.end_reg)
+            absmc.MoveInstr('move_immed_{}'.format(prefix), zero_reg, 0, True)
+            absmc.ArithInstr('sub', ret, zero_reg, stmt.arg.end_reg, prefix)
         else:
             # if it's a 0, branch to set 1
             # if it's a 1, we're falling through, setting to 0, and jumping out
