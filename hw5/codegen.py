@@ -117,16 +117,23 @@ def generate_class_code(cls):
     for method in cls.methods:
         setup_registers(method)
         current_method = method
+        method.returned = False
         absmc.MethodLabel(method.name, method.id)
         gen_code(method.body)
+        if not method.returned:
+            absmc.ProcedureInstr('ret')
     for constr in cls.constructors:
         setup_registers(constr)
+        current_method = constr
+        constr.returned = False
         absmc.ConstructorLabel(constr.id)
         gen_code(constr.body)
+        if not constr.returned:
+            absmc.ProcedureInstr('ret')  # We assume constrs don't have a return
 
 
 def gen_code(stmt):
-
+    global current_loop_continue_label, current_enter_then_label, current_break_out_else_label
     # stmt.end_reg is the destination register for each expression
     stmt.end_reg = None
 
@@ -173,8 +180,6 @@ def gen_code(stmt):
         stmt.end_reg = reg
 
     elif isinstance(stmt, ast.BinaryExpr):
-        global current_break_out_else_label, current_enter_then_label
-
         gen_code(stmt.arg1)
         gen_code(stmt.arg2)
 
@@ -233,7 +238,6 @@ def gen_code(stmt):
             stmt.end_reg = reg
 
     elif isinstance(stmt, ast.ForStmt):
-
         # for-loop:
         # for (i = 0; i < 10; i++) {
         #   body
@@ -292,6 +296,7 @@ def gen_code(stmt):
         pass
 
     elif isinstance(stmt, ast.ReturnStmt):
+        current_method.returned = True
         if stmt.expr is None:
             absmc.ProcedureInstr('ret')
             return
@@ -323,15 +328,12 @@ def gen_code(stmt):
         out_label.add_to_code()
 
     elif isinstance(stmt, ast.BreakStmt):
-        global current_break_out_else_label
         absmc.BranchInstr('jmp', current_break_out_else_label)
 
     elif isinstance(stmt, ast.ContinueStmt):
-        global current_loop_continue_label
         absmc.BranchInstr('jmp', current_loop_continue_label)
 
     elif isinstance(stmt, ast.IfStmt):
-
         # if (x == y)
         #   ++x;
         # else
@@ -442,11 +444,8 @@ def gen_code(stmt):
 
         absmc.ProcedureInstr('call', 'M_{}_{}'.format(method.name, method.id))
 
-        # reverse the list so we can pop them off
-        saved_regs.reverse()
-
-        # restore regs from the now-reversed save list
-        for reg in saved_regs:
+        # restore regs from the reversed save list
+        for reg in reversed(saved_regs):
             absmc.ProcedureInstr('restore', reg)
 
         stmt.end_reg = absmc.Register('a', 0)

@@ -240,6 +240,7 @@ class Constructor:
         self.id = lastconstructor
         self.visibility = visibility
         self.vars = VarTable()
+        self.storage = 'instance'
         
     def update_body(self, body):
         self.body = body
