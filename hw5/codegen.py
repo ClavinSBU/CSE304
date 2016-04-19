@@ -4,8 +4,8 @@ import absmc
 # TODO:
 # Must find a better way for short-circuit jumps to labels (stack implementation?)
 # Fix no-param constructors
-# Super
 # Lost .static_data?
+# Push args into 'a' registers
 
 ####################################################################################################
 
@@ -58,6 +58,7 @@ def calc_nonstatic_offsets(cls):
     for field in cls.fields.viewvalues():
         if field.storage == 'instance':
             field.offset = non_static_field_offset
+            print 'field {} given {}'.format(field.name, non_static_field_offset)
             non_static_field_offset += 1
 
     cls.size = non_static_field_offset
@@ -477,6 +478,9 @@ def gen_code(stmt):
             out_label.add_to_code()
 
         stmt.end_reg = ret
+
+    elif isinstance(stmt, ast.SuperExpr):
+        stmt.end_reg = absmc.Register('a', 0)
 
     else:
         print 'need instance ' + str(type(stmt))
