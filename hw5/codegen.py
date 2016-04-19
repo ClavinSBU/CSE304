@@ -89,7 +89,8 @@ def setup_registers(method):
     # block 0 are the formals, which go into args
     # if static, first arg is a0,
     # if instance, first arg is a1, as `this` goes in a0
-    if method.storage == 'static':
+
+    if isinstance(method, ast.Method) and method.storage == 'static':
         absmc.Register.count = 0
     else:
         absmc.Register.count = 1
@@ -115,6 +116,7 @@ def generate_class_code(cls):
         absmc.MethodLabel(method.name, method.id)
         gen_code(method.body)
     for constr in cls.constructors:
+        setup_registers(constr)
         absmc.ConstructorLabel(constr.id)
         gen_code(constr.body)
 
