@@ -429,6 +429,12 @@ def gen_code(stmt):
 
         saved_regs = []
 
+        arg_reg_index = 0
+
+        # first arg goes into a1 if desired method is not static
+        if method.storage != 'static':
+            arg_reg_index += 1
+
         # add a0 if the current method is not static
         if current_method.storage != 'static':
             saved_regs.append(absmc.Register('a', 0))
@@ -441,6 +447,14 @@ def gen_code(stmt):
         # save each reg in the saved list
         for reg in saved_regs:
             absmc.ProcedureInstr('save', reg)
+
+        if method.storage != 'static':
+            absmc.MoveInstr('move', absmc.Register('a', 0), stmt.base.end_reg)
+
+        for arg in stmt.args:
+            gen_code(arg)
+            absmc.MoveInstr('move', absmc.Register('a', arg_reg_index), arg.end_reg)
+            arg_reg_index += 1
 
         absmc.ProcedureInstr('call', 'M_{}_{}'.format(method.name, method.id))
 
