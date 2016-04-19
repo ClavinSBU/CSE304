@@ -1,0 +1,10 @@
+class Unary {
+    public Unary() {
+        int x;
+        int y;
+        float z;
+        x = -y;
+        y = -(2*x);
+        z = -(z/3.14);
+    }
+}

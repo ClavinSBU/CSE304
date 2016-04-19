@@ -17,20 +17,10 @@ def check_class(cls):
     for method in cls.methods:
         current_method = method
         stmt_error(method.body)
-        ensure_return_exists(method.body)
     for constr in cls.constructors:
         current_method = constr
         stmt_error(constr.body)
-        ensure_return_exists(method.body)
     current_method = None
-
-
-def ensure_return_exists(block):
-    '''Ensure a return statement exists at the end of a method.'''
-    if isinstance(block, ast.BlockStmt) and len(block.stmtlist) > 0:
-        if not (isinstance(block.stmtlist[-1], ast.SkipStmt) or
-                isinstance(block.stmtlist[-1], ast.ReturnStmt)):
-            block.stmtlist.append(ast.ReturnStmt(None, None))
 
 
 def stmt_error(stmt):

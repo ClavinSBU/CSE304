@@ -12,13 +12,14 @@ class Loops {
         }
     }
 
-    public void forloop(int i) {
+    public int forloop(int i) {
         int j;
         for(j = 0; j < i; j = j*2) {
             i++;
             if ((i / 2)*2 == i) // i is even
                 continue;
         }
+        return i;
     }
 }
 
@@ -35,7 +36,7 @@ class MoreLoops extends Loops {
             accum = accum*2 + 3;
         }
         this.more = accum;
-        this.forloop(this.more);
+        this.more = this.forloop(this.more);
         return accum;
     }
 }

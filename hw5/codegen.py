@@ -409,11 +409,9 @@ def gen_code(stmt):
 
         absmc.MoveInstr('move', absmc.Register('a', 0), recd_addr_reg)
         absmc.ProcedureInstr('call', 'C_{}'.format(stmt.constr_id))
-        # reverse the list so we can pop them off
-        saved_regs.reverse()
 
         # restore regs from the now-reversed save list
-        for reg in saved_regs:
+        for reg in reversed(saved_regs):
             absmc.ProcedureInstr('restore', reg)
 
         stmt.end_reg = recd_addr_reg
@@ -446,22 +444,27 @@ def gen_code(stmt):
 
         absmc.ProcedureInstr('call', 'M_{}_{}'.format(method.name, method.id))
 
+        # Store the result in a temporary register
+        stmt.end_reg = absmc.Register()
+        absmc.MoveInstr('move', stmt.end_reg, absmc.Register('a', 0))
+
         # restore regs from the reversed save list
         for reg in reversed(saved_regs):
             absmc.ProcedureInstr('restore', reg)
-
-        stmt.end_reg = absmc.Register('a', 0)
 
     elif isinstance(stmt, ast.UnaryExpr):
         gen_code(stmt.arg)
 
         ret = absmc.Register()
         if stmt.uop == 'uminus':
-            # TODO: what if it's a float??
             zero_reg = absmc.Register()
+            if stmt.arg.type == ast.Type('float'):
+                prefix = 'f'
+            else:
+                prefix = 'i'
             # if uminus, put 0 - <reg> into the return reg
-            absmc.MoveInstr('move_immed_i', zero_reg, 0, True)
-            absmc.ArithInstr('sub', ret, zero_reg, stmt.arg.end_reg)
+            absmc.MoveInstr('move_immed_{}'.format(prefix), zero_reg, 0, True)
+            absmc.ArithInstr('sub', ret, zero_reg, stmt.arg.end_reg, prefix)
         else:
             # if it's a 0, branch to set 1
             # if it's a 1, we're falling through, setting to 0, and jumping out
