@@ -384,16 +384,16 @@ def gen_code(stmt):
 
         # save each reg in the saved list
         for reg in saved_regs:
-            absmc.Procedure('save', reg)
+            absmc.ProcedureInstr('save', reg)
 
         absmc.MoveInstr('move', absmc.Register('a', 0), recd_addr_reg)
-        absmc.Procedure('call', 'C_{}'.format(stmt.constr_id))
+        absmc.ProcedureInstr('call', 'C_{}'.format(stmt.constr_id))
         # reverse the list so we can pop them off
         saved_regs.reverse()
 
         # restore regs from the now-reversed save list
         for reg in saved_regs:
-            absmc.Procedure('restore', reg)
+            absmc.ProcedureInstr('restore', reg)
 
         stmt.end_reg = recd_addr_reg
 
@@ -421,16 +421,16 @@ def gen_code(stmt):
 
         # save each reg in the saved list
         for reg in saved_regs:
-            absmc.Procedure('save', reg)
+            absmc.ProcedureInstr('save', reg)
 
-        absmc.Procedure('call', 'M_{}_{}'.format(method.name, method.id))
+        absmc.ProcedureInstr('call', 'M_{}_{}'.format(method.name, method.id))
 
         # reverse the list so we can pop them off
         saved_regs.reverse()
 
         # restore regs from the now-reversed save list
         for reg in saved_regs:
-            absmc.Procedure('restore', reg)
+            absmc.ProcedureInstr('restore', reg)
 
         stmt.end_reg = absmc.Register('a', 0)
 
