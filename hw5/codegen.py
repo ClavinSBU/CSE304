@@ -72,7 +72,7 @@ def calc_nonstatic_offsets(cls):
     for field in cls.fields.viewvalues():
         if field.storage == 'instance':
             field.offset = non_static_field_offset
-            print 'field {} given {}'.format(field.name, non_static_field_offset)
+            print '# field {} given {}'.format(field.name, non_static_field_offset)
             non_static_field_offset += 1
 
     cls.size = non_static_field_offset
@@ -115,14 +115,14 @@ def setup_registers(method):
 
     for var in method.vars.vars[0].values():
         var.reg = absmc.Register('a')
-        print 'var {} given {}'.format(var.name, var.reg)
+        print '# var {} given {}'.format(var.name, var.reg)
 
     absmc.Register.count = 0
     # rest of the vars in the method go into t registers
     for block in range(1, len(method.vars.vars)):
         for var in method.vars.vars[block].values():
             var.reg = absmc.Register('t')
-            print 'var {} given {}'.format(var.name, var.reg)
+            print '# var {} given {}'.format(var.name, var.reg)
 
 
 def generate_class_code(cls):
