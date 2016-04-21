@@ -1,0 +1,13 @@
+class Conditionals {
+    Conditionals() {
+        int x;
+        int y;
+        boolean z;
+        x = 0;
+        y = 2;
+        z = (x < 1) && (y > 1) && (y < 4);
+        if (z || y < -1) {
+            y = 3;
+        }
+    }
+}

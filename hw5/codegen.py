@@ -195,10 +195,10 @@ def gen_code(stmt):
         stmt.end_reg = reg
 
     elif isinstance(stmt, ast.BinaryExpr):
-        gen_code(stmt.arg1)
-        gen_code(stmt.arg2)
+        if stmt.bop not in ['and', 'or']:
+            gen_code(stmt.arg1)
+            gen_code(stmt.arg2)
 
-        if stmt.arg1.end_reg and stmt.arg2.end_reg:
             reg = absmc.Register()
             flt = ast.Type('float')
             intg = ast.Type('int')
@@ -214,13 +214,13 @@ def gen_code(stmt):
                 conv = absmc.Convert('itof', stmt.arg2.end_reg)
                 stmt.arg2.end_reg = conv.dst
 
-            if (stmt.bop in ['add', 'sub', 'mul', 'div', 'gt', 'geq', 'lt', 'leq']):
+            if stmt.bop in ['add', 'sub', 'mul', 'div', 'gt', 'geq', 'lt', 'leq']:
                 absmc.ArithInstr(stmt.bop, reg, stmt.arg1.end_reg, stmt.arg2.end_reg, expr_type)
 
             elif stmt.bop == 'eq' or stmt.bop == 'neq':
                 absmc.ArithInstr('sub', reg, stmt.arg1.end_reg, stmt.arg2.end_reg, expr_type)
 
-            if (stmt.bop == 'eq'):
+            if stmt.bop == 'eq':
 
                 # check if r2 == r3
                 # 1. perform sub r1, r2, r3 (done above)
@@ -240,17 +240,27 @@ def gen_code(stmt):
 
                 ieq_out.add_to_code()
 
-            if (stmt.bop == 'and'):
-                absmc.MoveInstr('move_immed_i', reg, 1, True)
-                absmc.BranchInstr('bz', current_break_out_else_label, stmt.arg1.end_reg)
-                absmc.BranchInstr('bz', current_break_out_else_label, stmt.arg2.end_reg)
+        if stmt.bop == 'and':
+            and_skip = absmc.BranchLabel(stmt.lines, 'AND_SKIP')
+            gen_code(stmt.arg1)
+            reg = absmc.Register()
+            absmc.MoveInstr('move', reg, stmt.arg1.end_reg)
+            absmc.BranchInstr('bz', and_skip, stmt.arg1.end_reg)
+            gen_code(stmt.arg2)
+            absmc.MoveInstr('move', reg, stmt.arg2.end_reg)
+            and_skip.add_to_code()
 
-            if (stmt.bop == 'or'):
-                absmc.MoveInstr('move_immed_i', reg, 0, True)
-                absmc.BranchInstr('bnz', current_enter_then_label, stmt.arg1.end_reg)
-                absmc.BranchInstr('bnz', current_enter_then_label, stmt.arg2.end_reg)
+        if stmt.bop == 'or':
+            or_skip = absmc.BranchLabel(stmt.lines, 'OR_SKIP')
+            gen_code(stmt.arg1)
+            reg = absmc.Register()
+            absmc.MoveInstr('move', reg, stmt.arg1.end_reg)
+            absmc.BranchInstr('bnz', or_skip, stmt.arg1.end_reg)
+            gen_code(stmt.arg2)
+            absmc.MoveInstr('move', reg, stmt.arg2.end_reg)
+            or_skip.add_to_code()
 
-            stmt.end_reg = reg
+        stmt.end_reg = reg
 
     elif isinstance(stmt, ast.ForStmt):
 
