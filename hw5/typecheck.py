@@ -403,6 +403,10 @@ def expr_error(expr):
             expr.type = ast.Type('error')
             signal_error('Auto expression must be int or float; received {}'.format(expr.arg.type), expr.lines)
 
+    elif isinstance(expr, ast.ArrayAccessExpr) or isinstance(expr, ast.NewArrayExpr):
+        expr.type = ast.Type('error')
+        signal_error("Array expression found, this is not supported!", expr.lines)
+
     return expr.type.is_error()
 
 

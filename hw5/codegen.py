@@ -528,6 +528,16 @@ def gen_code(stmt):
     elif isinstance(stmt, ast.SuperExpr):
         stmt.end_reg = absmc.Register('a', 0)
 
+    elif isinstance(stmt, ast.ArrayAccessExpr):
+        # Create fake register.
+        stmt.end_reg = absmc.Register('n', 0)
+        print 'Found an array access. Arrays are not supported.'
+
+    elif isinstance(stmt, ast.NewArrayExpr):
+        # Create fake register.
+        stmt.end_reg = absmc.Register('n', 0)
+        print 'Found an array creation. Arrays are not supported.'
+
     else:
         print 'need instance ' + str(type(stmt))
 

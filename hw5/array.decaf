@@ -1,0 +1,6 @@
+class Array {
+    Array() {
+        int x[];
+        x = new int[20];
+    }
+}
