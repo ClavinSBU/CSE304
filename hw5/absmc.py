@@ -84,8 +84,11 @@ class ConstructorLabel(Label):
 
 
 class BranchLabel(Label):
+    unique_int = 1
+
     def __init__(self, lines, name):
-        super(BranchLabel, self).__init__('L{}_{}'.format(lines, name))
+        super(BranchLabel, self).__init__('L{}_{}_{}'.format(lines, name, BranchLabel.unique_int))
+        BranchLabel.unique_int += 1
 
     def add_to_code(self):
         machine.add_label(self)
